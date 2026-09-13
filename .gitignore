@@ -26,6 +26,15 @@ checkpoints/
 *.csv
 *.gif
 *.mp4
+data/
+
+# Logs / scheduler output
+*.log
+*.o*
+*.e*
+
+# Tooling caches
+.firecrawl/
 
 # OS / editor
 .DS_Store

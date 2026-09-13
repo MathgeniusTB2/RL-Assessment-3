@@ -3,6 +3,9 @@ gymnasium
 stable-baselines3
 torch
 numpy
+pandas
 matplotlib
 pygame
 streamlit
+pettingzoo
+supersuit
