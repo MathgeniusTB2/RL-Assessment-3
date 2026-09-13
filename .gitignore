@@ -1,0 +1,33 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+.conda/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Flatland / RL artifacts
+results/
+outputs/
+runs/
+checkpoints/
+*.pkl
+*.pt
+*.pth
+*.ckpt
+
+# Data / renders
+*.csv
+*.gif
+*.mp4
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
