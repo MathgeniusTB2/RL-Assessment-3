@@ -26,7 +26,6 @@ checkpoints/
 *.csv
 *.gif
 *.mp4
-data/
 
 # Logs / scheduler output
 *.log

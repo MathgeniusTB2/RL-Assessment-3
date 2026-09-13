@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Plot our Flatland PPO training curves against the paper's W&B baseline.
+"""Plot Flatland PPO training curves from ``eval.csv`` files.
 
-Overlays per-seed evaluation curves (``eval.csv`` from ``train_ppo``) on the
-published PPO baseline extracted from the paper's public W&B runs.
+Reads the per-seed evaluation CSVs produced by ``train_ppo`` and renders the
+mean normalized score and completion rate versus training steps, with each run
+shown as a fine line and the mean in bold.
 
 Usage:
     python -m src.eval.plot_curves \
         --train-glob 'results/ppo/*/eval.csv' \
-        --out results/baselines/ppo_ours_vs_paper.png
+        --out results/ppo_training_curves.png
 """
 
 from __future__ import annotations
@@ -24,8 +25,7 @@ import numpy as np
 import pandas as pd
 
 DEFAULT_TRAIN_GLOB = "results/ppo/*/eval.csv"
-DEFAULT_BASELINE_GLOB = "data/baselines/flatland_paper_ppo/ppo_*.csv"
-DEFAULT_OUT = Path("results/baselines/ppo_ours_vs_paper.png")
+DEFAULT_OUT = Path("results/ppo_training_curves.png")
 
 PANELS = [
     ("normalized_score", "Mean normalized score"),
@@ -68,7 +68,6 @@ def load_curves(pattern: str, grid: np.ndarray, sigma_idx: float) -> dict[str, d
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--train-glob", default=DEFAULT_TRAIN_GLOB)
-    p.add_argument("--baseline-glob", default=DEFAULT_BASELINE_GLOB)
     p.add_argument("--out", type=Path, default=DEFAULT_OUT)
     p.add_argument("--smooth-sigma", type=float, default=250_000.0)
     p.add_argument("--max-step", type=float, default=15_000_000.0)
@@ -78,34 +77,22 @@ def main() -> int:
     sigma_idx = args.smooth_sigma / (grid[1] - grid[0])
 
     train = load_curves(args.train_glob, grid, sigma_idx)
-    baseline = load_curves(args.baseline_glob, grid, sigma_idx)
-    if not train and not baseline:
-        print("No curves found.")
+    if not train:
+        print(f"No curves found for {args.train_glob}")
         return 1
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
     steps_m = grid / 1e6
 
     for ax, (key, title) in zip(axes, PANELS):
-        for name, series in baseline.items():
-            if key in series:
-                ax.plot(steps_m, series[key], color="tab:blue", alpha=0.12, linewidth=0.7)
-        if baseline:
-            stack = np.vstack([s[key] for s in baseline.values() if key in s])
-            ax.plot(
-                steps_m, stack.mean(axis=0), color="tab:blue", linewidth=2.0,
-                linestyle="--", label=f"paper W&B (n={len(stack)})",
-            )
         for name, series in train.items():
             if key in series:
                 ax.plot(steps_m, series[key], color="tab:red", alpha=0.45, linewidth=0.9)
-        if train:
-            stack = np.vstack([s[key] for s in train.values() if key in s])
-            ax.plot(
-                steps_m, stack.mean(axis=0), color="tab:red", linewidth=2.4,
-                label=f"ours (n={len(stack)})",
-            )
-
+        stack = np.vstack([s[key] for s in train.values() if key in s])
+        ax.plot(
+            steps_m, stack.mean(axis=0), color="tab:red", linewidth=2.4,
+            label=f"mean (n={len(stack)})",
+        )
         ax.set_title(title)
         ax.set_xlabel("training steps (millions)")
         ax.grid(alpha=0.3)
@@ -113,7 +100,7 @@ def main() -> int:
         if key == "completion_rate":
             ax.set_ylim(0, 1.05)
 
-    fig.suptitle("Flatland PPO: our training vs paper baseline (arXiv:2012.05893)", fontsize=12)
+    fig.suptitle("Flatland PPO training curves", fontsize=12)
     fig.tight_layout()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=150)

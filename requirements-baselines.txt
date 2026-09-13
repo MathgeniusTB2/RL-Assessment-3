@@ -1,7 +1,0 @@
-# Lightweight deps for pulling the Flatland paper's published W&B curves and
-# re-plotting them as a baseline. Does NOT include flatland-rl / RLlib, which
-# are only needed to re-run the original training.
-requests
-pandas
-numpy
-matplotlib

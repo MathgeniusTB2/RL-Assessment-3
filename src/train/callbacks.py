@@ -1,8 +1,7 @@
-"""Evaluation callback for the Flatland PPO baseline.
+"""Evaluation callback for the Flatland PPO training.
 
 Runs deterministic evaluation episodes on held-out seeds and appends
-``step, normalized_score, completion_rate`` rows to a CSV, matching the schema
-used for the paper's W&B baseline.
+``step, normalized_score, completion_rate`` rows to a CSV.
 """
 
 from __future__ import annotations
@@ -68,9 +67,8 @@ class FlatlandEvalCallback(BaseCallback):
                 break
 
         rewards_arr = np.array([cum[a] for a in agents])
-        # Flatland's normalize() returns the [0, 1] normalized reward; the paper
-        # (and its W&B metric `episode_score_normalized`) reports the same value
-        # without the +1 shift, i.e. in (-1, 0]. Subtract 1 to match that scale.
+        # Flatland's normalize() returns the [0, 1] normalized reward; report the
+        # same value without the +1 shift, i.e. in (-1, 0].
         normalized = float(
             raw.rewards.normalize(*rewards_arr, num_agents=n_agents, max_episode_steps=max_steps)
         ) - 1.0
