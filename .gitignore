@@ -32,6 +32,10 @@ checkpoints/
 *.o*
 *.e*
 
+# Committed scenario artifacts (otherwise ignored by the patterns above)
+!docs/comparison/*.gif
+!data/levels/*.pkl
+
 # Tooling caches
 .firecrawl/
 

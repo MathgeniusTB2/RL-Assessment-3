@@ -9,3 +9,6 @@ pygame
 streamlit
 pettingzoo
 supersuit
+pillow
+ipykernel
+jupyterlab

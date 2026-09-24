@@ -1,0 +1,2296 @@
+{
+  "name": "Central-Strathfield round trips, weekday 20260924, 16:00-19:00",
+  "reference_date": "20260924",
+  "window": "16:00-19:00",
+  "lines": [
+    "T1",
+    "T2",
+    "T3",
+    "T9",
+    "CCN",
+    "BMT"
+  ],
+  "stations": [
+    "Strathfield",
+    "Burwood",
+    "Redfern",
+    "Central"
+  ],
+  "services": [
+    {
+      "id": "T1-155K.2006.101.124.A.8.90670724",
+      "line": "T1",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+1995",
+      "central_platform": "16",
+      "turnaround": 0,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 57600,
+          "dep": 57660,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 58302,
+          "dep": 58332,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 58440,
+          "dep": 58440,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 58380,
+          "dep": 58440,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 58572,
+          "dep": 58602,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 59430,
+          "dep": 59460,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 59580,
+          "dep": 59640,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "BMT-W754.2006.101.124.D.6.90676259",
+      "line": "BMT",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "4",
+      "turnaround": 115,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 57780,
+          "dep": 57840,
+          "platform": "2"
+        },
+        {
+          "station": "Central",
+          "arr": 58626,
+          "dep": 58626,
+          "platform": "4"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 58741,
+          "dep": 58741,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 58866,
+          "dep": 58896,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 59490,
+          "dep": 59544,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-107K.2006.101.124.T.8.90669273",
+      "line": "T1",
+      "return_line": "T3",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+98",
+      "central_platform": "16",
+      "turnaround": 60,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 58440,
+          "dep": 58500,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59142,
+          "dep": 59172,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 59280,
+          "dep": 59280,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 59280,
+          "dep": 59340,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59472,
+          "dep": 59502,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 60600,
+          "dep": 60630,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 60750,
+          "dep": 60810,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T2-63-J.2006.101.124.M.8.90673329",
+      "line": "T2",
+      "return_line": "T3",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+10909",
+      "central_platform": "17",
+      "turnaround": 480,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 58482,
+          "dep": 58542,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 58686,
+          "dep": 58716,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59610,
+          "dep": 59640,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 59760,
+          "dep": 59760,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60180,
+          "dep": 60240,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60372,
+          "dep": 60402,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 61500,
+          "dep": 61530,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 61650,
+          "dep": 61710,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T9-122S.2006.101.124.A.8.90669519",
+      "line": "T9",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+12687",
+      "central_platform": "16",
+      "turnaround": 241,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 58680,
+          "dep": 58740,
+          "platform": "5"
+        },
+        {
+          "station": "Burwood",
+          "arr": 58878,
+          "dep": 58908,
+          "platform": "3"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59442,
+          "dep": 59472,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 59580,
+          "dep": 59580,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 59821,
+          "dep": 59821,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59946,
+          "dep": 59976,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 60570,
+          "dep": 60624,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "CCN-285D.2006.101.124.H.8.90671744",
+      "line": "CCN",
+      "return_line": "BMT",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_main",
+      "express": false,
+      "return_express": true,
+      "block_id": "7+11",
+      "central_platform": "16",
+      "turnaround": 301,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 58920,
+          "dep": 58980,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 59610,
+          "dep": 59640,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 59760,
+          "dep": 59760,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60061,
+          "dep": 60061,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 60780,
+          "dep": 60840,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "T3-16-M.2006.101.124.B.8.90670806",
+      "line": "T3",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+9940",
+      "central_platform": "17",
+      "turnaround": 1,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 59202,
+          "dep": 59262,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 59406,
+          "dep": 59436,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60210,
+          "dep": 60240,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 60360,
+          "dep": 60360,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60361,
+          "dep": 60361,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60486,
+          "dep": 60516,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 61110,
+          "dep": 61164,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T9-128N.2006.101.124.A.8.90669739",
+      "line": "T9",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+12970",
+      "central_platform": "16",
+      "turnaround": 61,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 59580,
+          "dep": 59640,
+          "platform": "5"
+        },
+        {
+          "station": "Burwood",
+          "arr": 59778,
+          "dep": 59808,
+          "platform": "3"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60342,
+          "dep": 60372,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 60480,
+          "dep": 60480,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60541,
+          "dep": 60541,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60666,
+          "dep": 60696,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 61290,
+          "dep": 61350,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "BMT-W756.2006.101.124.D.4.90676733",
+      "line": "BMT",
+      "return_line": "CCN",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_main",
+      "express": true,
+      "return_express": true,
+      "block_id": "",
+      "central_platform": "4",
+      "turnaround": 49,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 59610,
+          "dep": 59670,
+          "platform": "2"
+        },
+        {
+          "station": "Central",
+          "arr": 60432,
+          "dep": 60432,
+          "platform": "4"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60481,
+          "dep": 60481,
+          "platform": "9"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 61200,
+          "dep": 61260,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "CCN-284F.2006.101.124.H.8.90671736",
+      "line": "CCN",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+18",
+      "central_platform": "16",
+      "turnaround": 61,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 59820,
+          "dep": 59880,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60510,
+          "dep": 60540,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 60660,
+          "dep": 60660,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 60721,
+          "dep": 60721,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60846,
+          "dep": 60876,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 61470,
+          "dep": 61524,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-196L.2006.101.124.B.8.90671349",
+      "line": "T1",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+1504",
+      "central_platform": "16",
+      "turnaround": 480,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60000,
+          "dep": 60060,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60702,
+          "dep": 60732,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 60840,
+          "dep": 60840,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 61260,
+          "dep": 61320,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61452,
+          "dep": 61482,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 62628,
+          "dep": 62658,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 62760,
+          "dep": 62820,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "CCN-N448.2006.101.124.D.10.90675950",
+      "line": "CCN",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "9",
+      "turnaround": 631,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60060,
+          "dep": 60120,
+          "platform": "1"
+        },
+        {
+          "station": "Central",
+          "arr": 60990,
+          "dep": 60990,
+          "platform": "9"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 61621,
+          "dep": 61621,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61746,
+          "dep": 61776,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 62370,
+          "dep": 62424,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-172R.2006.101.124.A.8.90670977",
+      "line": "T1",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+108",
+      "central_platform": "16",
+      "turnaround": 901,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60240,
+          "dep": 60300,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 60942,
+          "dep": 60972,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 61080,
+          "dep": 61080,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 61981,
+          "dep": 61981,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62106,
+          "dep": 62136,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 62730,
+          "dep": 62784,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T2-2--L.2006.101.124.B.8.90671420",
+      "line": "T2",
+      "return_line": "CCN",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_main",
+      "express": false,
+      "return_express": true,
+      "block_id": "7+10895",
+      "central_platform": "17",
+      "turnaround": 721,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60282,
+          "dep": 60342,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 60486,
+          "dep": 60516,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61410,
+          "dep": 61440,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 61560,
+          "dep": 61560,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62281,
+          "dep": 62281,
+          "platform": "9"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63000,
+          "dep": 63060,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "T9-102P.2006.101.124.T.8.90669124",
+      "line": "T9",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+12699",
+      "central_platform": "16",
+      "turnaround": 781,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60480,
+          "dep": 60540,
+          "platform": "5"
+        },
+        {
+          "station": "Burwood",
+          "arr": 60678,
+          "dep": 60708,
+          "platform": "3"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61242,
+          "dep": 61272,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 61380,
+          "dep": 61380,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62161,
+          "dep": 62161,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62286,
+          "dep": 62316,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 62910,
+          "dep": 62964,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "CCN-283D.2006.101.124.H.8.90671726",
+      "line": "CCN",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+27",
+      "central_platform": "16",
+      "turnaround": 660,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 60720,
+          "dep": 60780,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61410,
+          "dep": 61440,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 61560,
+          "dep": 61560,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62160,
+          "dep": 62220,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62352,
+          "dep": 62382,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 63528,
+          "dep": 63558,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63660,
+          "dep": 63720,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T3-66-N.2006.101.124.M.8.90673359",
+      "line": "T3",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+9906",
+      "central_platform": "17",
+      "turnaround": 361,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 61002,
+          "dep": 61062,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 61206,
+          "dep": 61236,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62010,
+          "dep": 62040,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 62160,
+          "dep": 62160,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62521,
+          "dep": 62521,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62646,
+          "dep": 62676,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63270,
+          "dep": 63324,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-170N.2006.101.124.A.8.90670955",
+      "line": "T1",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+2046",
+      "central_platform": "16",
+      "turnaround": 361,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 61140,
+          "dep": 61200,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 61842,
+          "dep": 61872,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 61980,
+          "dep": 61980,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62341,
+          "dep": 62341,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62466,
+          "dep": 62496,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63090,
+          "dep": 63144,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "BMT-W758.2006.101.124.D.6.90676772",
+      "line": "BMT",
+      "return_line": "T9",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "7",
+      "turnaround": 481,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 61410,
+          "dep": 61470,
+          "platform": "2"
+        },
+        {
+          "station": "Central",
+          "arr": 62220,
+          "dep": 62220,
+          "platform": "7"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62701,
+          "dep": 62701,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62826,
+          "dep": 62856,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63450,
+          "dep": 63510,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "CCN-282J.2006.101.124.H.8.90671717",
+      "line": "CCN",
+      "return_line": "BMT",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_main",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+34",
+      "central_platform": "16",
+      "turnaround": 241,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 61620,
+          "dep": 61680,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62310,
+          "dep": 62340,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 62460,
+          "dep": 62460,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62701,
+          "dep": 62701,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62880,
+          "dep": 62940,
+          "platform": "2"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 63486,
+          "dep": 63546,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "T1-136G.2006.101.124.A.8.90669978",
+      "line": "T1",
+      "return_line": "T3",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+118",
+      "central_platform": "16",
+      "turnaround": 60,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62040,
+          "dep": 62100,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 62742,
+          "dep": 62772,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 62880,
+          "dep": 62880,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 62880,
+          "dep": 62940,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63072,
+          "dep": 63102,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 64200,
+          "dep": 64230,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 64350,
+          "dep": 64410,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T2-83-J.2006.101.124.A.8.90674034",
+      "line": "T2",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+10903",
+      "central_platform": "17",
+      "turnaround": 421,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62082,
+          "dep": 62142,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 62286,
+          "dep": 62316,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63210,
+          "dep": 63240,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 63360,
+          "dep": 63360,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 63781,
+          "dep": 63781,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63906,
+          "dep": 63936,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 64530,
+          "dep": 64584,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T2-1--P.2006.101.124.B.8.90668995",
+      "line": "T2",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+9043",
+      "central_platform": "17",
+      "turnaround": 181,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62298,
+          "dep": 62358,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 62508,
+          "dep": 62538,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63630,
+          "dep": 63660,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 63780,
+          "dep": 63780,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 63961,
+          "dep": 63961,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64086,
+          "dep": 64116,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 64710,
+          "dep": 64764,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "CCN-281H.2006.101.124.H.8.90671706",
+      "line": "CCN",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+1",
+      "central_platform": "16",
+      "turnaround": 61,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62520,
+          "dep": 62580,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63210,
+          "dep": 63240,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 63360,
+          "dep": 63360,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 63421,
+          "dep": 63421,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63546,
+          "dep": 63576,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 64170,
+          "dep": 64224,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T3-88-T.2006.101.124.A.8.90674261",
+      "line": "T3",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+9950",
+      "central_platform": "17",
+      "turnaround": 60,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62802,
+          "dep": 62862,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 63006,
+          "dep": 63036,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63810,
+          "dep": 63840,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 63960,
+          "dep": 63960,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 63960,
+          "dep": 64020,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64152,
+          "dep": 64182,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 65328,
+          "dep": 65358,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 65460,
+          "dep": 65520,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T1-173N.2006.101.124.A.8.90670997",
+      "line": "T1",
+      "return_line": "T3",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+2067",
+      "central_platform": "16",
+      "turnaround": 60,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 62940,
+          "dep": 63000,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63642,
+          "dep": 63672,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 63780,
+          "dep": 63780,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 63780,
+          "dep": 63840,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 63972,
+          "dep": 64002,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 65100,
+          "dep": 65130,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 65250,
+          "dep": 65310,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T2-84-T.2006.101.124.A.8.90674086",
+      "line": "T2",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+9050",
+      "central_platform": "17",
+      "turnaround": 240,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 63198,
+          "dep": 63258,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 63408,
+          "dep": 63438,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64530,
+          "dep": 64560,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 64680,
+          "dep": 64680,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 64860,
+          "dep": 64920,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 65052,
+          "dep": 65082,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 66228,
+          "dep": 66258,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 66360,
+          "dep": 66420,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "BMT-W760.2006.101.124.D.6.90676267",
+      "line": "BMT",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "11",
+      "turnaround": 259,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 63210,
+          "dep": 63270,
+          "platform": "2"
+        },
+        {
+          "station": "Central",
+          "arr": 64062,
+          "dep": 64062,
+          "platform": "11"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 64321,
+          "dep": 64321,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64446,
+          "dep": 64476,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 65070,
+          "dep": 65124,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-202F.2006.101.124.H.8.90671501",
+      "line": "T1",
+      "return_line": "T3",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+128",
+      "central_platform": "16",
+      "turnaround": 60,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 63840,
+          "dep": 63900,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64542,
+          "dep": 64572,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 64680,
+          "dep": 64680,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 64680,
+          "dep": 64740,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64872,
+          "dep": 64902,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 66000,
+          "dep": 66030,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 66150,
+          "dep": 66210,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T2-22-J.2006.101.124.B.8.90671598",
+      "line": "T2",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+10113",
+      "central_platform": "17",
+      "turnaround": 181,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 63882,
+          "dep": 63942,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 64086,
+          "dep": 64116,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 64890,
+          "dep": 64920,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 65040,
+          "dep": 65040,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 65221,
+          "dep": 65221,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 65346,
+          "dep": 65376,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 65970,
+          "dep": 66024,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T3-18-T.2006.101.124.B.8.90671047",
+      "line": "T3",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+8514",
+      "central_platform": "17",
+      "turnaround": 30,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 64602,
+          "dep": 64662,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 64806,
+          "dep": 64836,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 65646,
+          "dep": 65676,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 65790,
+          "dep": 65790,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 65760,
+          "dep": 65820,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 65952,
+          "dep": 65982,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 67128,
+          "dep": 67158,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 67260,
+          "dep": 67320,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "BMT-W762.2006.101.124.D.6.90676774",
+      "line": "BMT",
+      "return_line": "T9",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "7",
+      "turnaround": 481,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 65010,
+          "dep": 65070,
+          "platform": "2"
+        },
+        {
+          "station": "Central",
+          "arr": 65820,
+          "dep": 65820,
+          "platform": "7"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 66301,
+          "dep": 66301,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66426,
+          "dep": 66456,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 67050,
+          "dep": 67110,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-193K.2006.101.124.B.8.90671253",
+      "line": "T1",
+      "return_line": "BMT",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_main",
+      "express": false,
+      "return_express": true,
+      "block_id": "7+1527",
+      "central_platform": "16",
+      "turnaround": 121,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 65400,
+          "dep": 65460,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66102,
+          "dep": 66132,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 66240,
+          "dep": 66240,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 66361,
+          "dep": 66361,
+          "platform": "7"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 67080,
+          "dep": 67140,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "CCN-N454.2006.101.124.D.10.90675961",
+      "line": "CCN",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_main",
+      "return_track": "down_suburban",
+      "express": true,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "9",
+      "turnaround": 211,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 65460,
+          "dep": 65520,
+          "platform": "1"
+        },
+        {
+          "station": "Central",
+          "arr": 66390,
+          "dep": 66390,
+          "platform": "9"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 66601,
+          "dep": 66601,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66726,
+          "dep": 66756,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 67350,
+          "dep": 67404,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-110H.2006.101.124.T.8.90669352",
+      "line": "T1",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+202",
+      "central_platform": "16",
+      "turnaround": 301,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 65640,
+          "dep": 65700,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66342,
+          "dep": 66372,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 66480,
+          "dep": 66480,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 66781,
+          "dep": 66781,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66906,
+          "dep": 66936,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 67530,
+          "dep": 67584,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T2-79-J.2006.101.124.A.8.90673812",
+      "line": "T2",
+      "return_line": "CCN",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_main",
+      "express": false,
+      "return_express": true,
+      "block_id": "7+10620",
+      "central_platform": "17",
+      "turnaround": 931,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 65682,
+          "dep": 65742,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 65886,
+          "dep": 65916,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 66726,
+          "dep": 66756,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 66870,
+          "dep": 66870,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 67801,
+          "dep": 67801,
+          "platform": "9"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 68520,
+          "dep": 68580,
+          "platform": "3"
+        }
+      ]
+    },
+    {
+      "id": "T9-101T.2006.101.124.T.8.90669084",
+      "line": "T9",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "",
+      "central_platform": "13",
+      "turnaround": 1225,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 66168,
+          "dep": 66216,
+          "platform": "1"
+        },
+        {
+          "station": "Burwood",
+          "arr": 66360,
+          "dep": 66390,
+          "platform": "1"
+        },
+        {
+          "station": "Central",
+          "arr": 67176,
+          "dep": 67176,
+          "platform": "13"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 68401,
+          "dep": 68401,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 68526,
+          "dep": 68556,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 69150,
+          "dep": 69204,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-151P.2006.101.124.A.8.90670601",
+      "line": "T1",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+1209",
+      "central_platform": "16",
+      "turnaround": 1200,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 66300,
+          "dep": 66360,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 67002,
+          "dep": 67032,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 67140,
+          "dep": 67140,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 68280,
+          "dep": 68340,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 68472,
+          "dep": 68502,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 69330,
+          "dep": 69360,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 69480,
+          "dep": 69540,
+          "platform": "8"
+        }
+      ]
+    },
+    {
+      "id": "T3-17-S.2006.101.124.B.8.90670924",
+      "line": "T3",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+8305",
+      "central_platform": "17",
+      "turnaround": 1891,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 66402,
+          "dep": 66462,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 66606,
+          "dep": 66636,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 67446,
+          "dep": 67476,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 67590,
+          "dep": 67590,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 69481,
+          "dep": 69481,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 69606,
+          "dep": 69636,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 70230,
+          "dep": 70284,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T1-135N.2006.101.124.A.8.90669959",
+      "line": "T1",
+      "return_line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "return_track": "down_suburban",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+1924",
+      "central_platform": "16",
+      "turnaround": 1921,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 66540,
+          "dep": 66600,
+          "platform": "4"
+        },
+        {
+          "station": "Redfern",
+          "arr": 67242,
+          "dep": 67272,
+          "platform": "3"
+        },
+        {
+          "station": "Central",
+          "arr": 67380,
+          "dep": 67380,
+          "platform": "16"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 69301,
+          "dep": 69301,
+          "platform": "18"
+        },
+        {
+          "station": "Redfern",
+          "arr": 69426,
+          "dep": 69456,
+          "platform": "4"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 70050,
+          "dep": 70104,
+          "platform": "6"
+        }
+      ]
+    },
+    {
+      "id": "T2-68-J.2006.101.124.M.8.90673381",
+      "line": "T2",
+      "return_line": "T2",
+      "direction": "up",
+      "track": "up_local",
+      "return_track": "down_local",
+      "express": false,
+      "return_express": false,
+      "block_id": "7+10640",
+      "central_platform": "17",
+      "turnaround": 1470,
+      "outbound": [
+        {
+          "station": "Strathfield",
+          "arr": 67482,
+          "dep": 67542,
+          "platform": "7"
+        },
+        {
+          "station": "Burwood",
+          "arr": 67686,
+          "dep": 67716,
+          "platform": "5"
+        },
+        {
+          "station": "Redfern",
+          "arr": 68526,
+          "dep": 68556,
+          "platform": "5"
+        },
+        {
+          "station": "Central",
+          "arr": 68670,
+          "dep": 68670,
+          "platform": "17"
+        }
+      ],
+      "return": [
+        {
+          "station": "Central",
+          "arr": 70080,
+          "dep": 70140,
+          "platform": "19"
+        },
+        {
+          "station": "Redfern",
+          "arr": 70272,
+          "dep": 70302,
+          "platform": "6"
+        },
+        {
+          "station": "Burwood",
+          "arr": 71130,
+          "dep": 71160,
+          "platform": "6"
+        },
+        {
+          "station": "Strathfield",
+          "arr": 71280,
+          "dep": 71340,
+          "platform": "8"
+        }
+      ]
+    }
+  ]
+}
