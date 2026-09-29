@@ -20,8 +20,8 @@ a gridworld toolkit for multi-agent RL developed with Swiss Federal Railways (SB
 
 - **Primary scenario:** Central-Strathfield (Main Suburban corridor), the 92x37
   turnback level, run on the real round-trip schedule.
-- **Secondary scenario (planned):** Granville-Harris Park (Main Western
-  junction), not yet implemented.
+- **Secondary scenario:** Granville-Harris Park (Main Western junction), a
+  20x20 level with a merge, a flat crossing and a branch to Merrylands.
 - **Disruptions:** stochastic malfunctions (track faults, maintenance, weather holds).
 - **Algorithms:** PPO (primary), A2C, DQN, one shared policy across agents.
 - **Reward:** Flatland's shaped `DefaultRewards` (punctuality + schedule
@@ -36,18 +36,21 @@ builder, the environment factory (with the env-enforced stop reflex), the greedy
 baseline, the PettingZoo/SuperSuit wrappers and the evaluation/plotting code,
 with no `src/` imports.
 
-The scenario is a **prebuilt Flatland env** (rail + fleet + timetable) plus its
+Each scenario is a **prebuilt Flatland env** (rail + fleet + timetable) plus its
 source schedule, both read from `data/`, so run the notebook from the repository
 root:
 
-- `data/levels/central_strathfield.pkl`: the prebuilt env loaded by the notebook.
-- `data/schedules/central_strathfield_roundtrips.json`: the source timetable.
-- `data/levels/central_strathfield_rail.mpk`: the rail grid used to build the env.
+- `data/levels/central_strathfield.pkl`: the prebuilt scenario-1 env loaded by the notebook.
+- `data/schedules/central_strathfield_roundtrips.json`: the scenario-1 source timetable.
+- `data/levels/central_strathfield_rail.mpk`: the rail grid used to build the scenario-1 env.
+- `data/levels/granville_harris_park.pkl`, `data/schedules/granville_harris_park.json`
+  and `data/levels/granville_harris_park_rail.mpk`: the same three files for scenario 2.
 
-Build (or rebuild) the env before running the notebook:
+Build (or rebuild) the envs before running the notebook:
 
 ```bash
 python scripts/build_scenario1_env.py
+python scripts/build_scenario2_env.py
 ```
 
 ## Repository layout
@@ -146,7 +149,7 @@ conditions**:
 
 ```python
 FORCE_STOP # env-enforce scheduled stops (default True; see section 2.4)
-SCENARIOS  # "central-strathfield"; "granville-harris-park" is a TODO (section 9)
+SCENARIOS  # "central-strathfield" | "granville-harris-park" (section 2.3)
 CONDITIONS # "normal" (deterministic) | "delayed" (Poisson malfunctions, 1/540)
 
 env = make_env(SCENARIO, CONDITION, seed=SEED)     # RailEnv: render / step
@@ -165,8 +168,8 @@ to learn to stop. Pass `force_stop=False` to leave stopping to the policy.
 
 `SCENARIO` and `CONDITION` are set once in section 1 (defaults
 `"central-strathfield"` / `"normal"`), so every constructor picks up the same
-setting. Adding scenario 2 means adding its level and schedule under `data/`,
-extending the build script to assemble its env, and replacing one registry entry.
+setting. Every factory also takes `scenario=`, e.g.
+`build_vec_env(scenario="granville-harris-park")` trains on scenario 2.
 
 ## Scenario 1 (Central-Strathfield, round-trip schedule)
 
@@ -197,9 +200,31 @@ stops served, cumulative return and a collision/deadlock proxy under both
 The notebook's section 7 comparison renders the scenario-1 greedy baseline under
 both conditions (`docs/comparison/scenario1_greedy_normal.gif` and
 `scenario1_greedy_delayed.gif`) and overlays the training metrics of each
-algorithm against the normal baseline. Scenario 2 (Granville-Harris Park) is
-pending (section 9 stub), so the side-by-side corridor comparison will activate
-once its `SCENARIOS` entry is filled in.
+algorithm against the normal baseline. Section 7.3 puts the scenario-2 greedy
+baseline next to it.
+
+## Scenario 2 (Granville-Harris Park, flat junction)
+
+Scenario 2 is a 20x20 level on the Main Western line between Harris Park (west)
+and Granville (east): four parallel tracks (Up/Down Main, Up/Down Suburban), five
+crossovers, and a branch to Merrylands that joins the Up Suburban at a merge,
+leaves the Down Suburban at a junction and crosses it on the flat. It is a
+junction problem: trains converging on the merge and the flat crossing,
+especially under `delayed`.
+
+The schedule is an illustrative 17:15-17:25 PM-peak sample rather than GTFS: T1
+between Granville and Harris Park, T2 between Granville and Merrylands, and a Blue
+Mountains intercity on the Main lines, 10 services in total.
+
+```bash
+# assemble the prebuilt env (rail grid + schedule -> agents + timetable)
+python scripts/build_scenario2_env.py
+```
+
+It uses the same timing model and deadline rule as scenario 1 (1 step = 20 s,
+express 1.0, all-stops 0.5). Section 9 of the notebook shows the level and the
+schedule, and section 7.3 compares its greedy baseline with scenario 1
+(`docs/comparison/scenario2_greedy_normal.gif`, `scenario2_greedy_delayed.gif`).
 
 ## Status
 
@@ -210,7 +235,7 @@ once its `SCENARIOS` entry is filled in.
 - [ ] Implement PPO
 - [ ] Implement A2C
 - [ ] Implement DQN
-- [ ] Custom scenario 2 (Granville-Harris Park)
+- [x] Custom scenario 2 (Granville-Harris Park) with a merge, flat crossing and branch
 - [ ] Training + hyperparameter tuning
 - [ ] Evaluation on hold-out scenarios (normal vs delayed)
 - [ ] GUI / dashboard and demo

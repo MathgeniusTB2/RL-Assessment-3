@@ -1,0 +1,237 @@
+{
+  "name": "Granville-Harris Park, illustrative PM-peak sample, 17:15-17:25",
+  "reference_date": null,
+  "window": "17:15-17:25",
+  "lines": [
+    "T1",
+    "T2",
+    "BMT"
+  ],
+  "stations": [
+    "Harris Park",
+    "Granville",
+    "Merrylands"
+  ],
+  "services": [
+    {
+      "id": "T1-1715-down",
+      "line": "T1",
+      "direction": "down",
+      "track": "down_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Granville",
+          "arr": null,
+          "dep": 62100,
+          "platform": "down_suburban"
+        },
+        {
+          "station": "Harris Park",
+          "arr": 62700,
+          "dep": null,
+          "platform": "down_suburban"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T2-1717-down",
+      "line": "T2",
+      "direction": "down",
+      "track": "down_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Granville",
+          "arr": null,
+          "dep": 62220,
+          "platform": "down_suburban"
+        },
+        {
+          "station": "Merrylands",
+          "arr": 62380,
+          "dep": null,
+          "platform": "down_sw"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "BMT-1718-down",
+      "line": "BMT",
+      "direction": "down",
+      "track": "down_main",
+      "express": true,
+      "outbound": [
+        {
+          "station": "Granville",
+          "arr": null,
+          "dep": 62280,
+          "platform": "down_main"
+        },
+        {
+          "station": "Harris Park",
+          "arr": 62580,
+          "dep": null,
+          "platform": "down_main"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T1-1720-down",
+      "line": "T1",
+      "direction": "down",
+      "track": "down_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Granville",
+          "arr": null,
+          "dep": 62400,
+          "platform": "down_suburban"
+        },
+        {
+          "station": "Harris Park",
+          "arr": 63000,
+          "dep": null,
+          "platform": "down_suburban"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T2-1723-down",
+      "line": "T2",
+      "direction": "down",
+      "track": "down_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Granville",
+          "arr": null,
+          "dep": 62580,
+          "platform": "down_suburban"
+        },
+        {
+          "station": "Merrylands",
+          "arr": 62740,
+          "dep": null,
+          "platform": "down_sw"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T1-1715-up",
+      "line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Harris Park",
+          "arr": null,
+          "dep": 62100,
+          "platform": "up_suburban"
+        },
+        {
+          "station": "Granville",
+          "arr": 62700,
+          "dep": null,
+          "platform": "up_suburban"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "BMT-1716-up",
+      "line": "BMT",
+      "direction": "up",
+      "track": "up_main",
+      "express": true,
+      "outbound": [
+        {
+          "station": "Harris Park",
+          "arr": null,
+          "dep": 62160,
+          "platform": "up_main"
+        },
+        {
+          "station": "Granville",
+          "arr": 62460,
+          "dep": null,
+          "platform": "up_main"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T2-1719-up",
+      "line": "T2",
+      "direction": "up",
+      "track": "up_sw",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Merrylands",
+          "arr": null,
+          "dep": 62340,
+          "platform": "up_sw"
+        },
+        {
+          "station": "Granville",
+          "arr": 62700,
+          "dep": null,
+          "platform": "up_suburban"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T1-1719-up",
+      "line": "T1",
+      "direction": "up",
+      "track": "up_suburban",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Harris Park",
+          "arr": null,
+          "dep": 62340,
+          "platform": "up_suburban"
+        },
+        {
+          "station": "Granville",
+          "arr": 62940,
+          "dep": null,
+          "platform": "up_suburban"
+        }
+      ],
+      "return": []
+    },
+    {
+      "id": "T2-1724-up",
+      "line": "T2",
+      "direction": "up",
+      "track": "up_sw",
+      "express": false,
+      "outbound": [
+        {
+          "station": "Merrylands",
+          "arr": null,
+          "dep": 62640,
+          "platform": "up_sw"
+        },
+        {
+          "station": "Granville",
+          "arr": 63000,
+          "dep": null,
+          "platform": "up_suburban"
+        }
+      ],
+      "return": []
+    }
+  ]
+}
