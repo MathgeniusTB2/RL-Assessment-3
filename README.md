@@ -189,10 +189,15 @@ jupyter notebook notebooks/train_schedule_optimisation.ipynb
 ```
 
 Timing model: 1 Flatland step = 20 s; express speed 1.0, all-stops 0.5; real
-departure spacing with reachable per-stop arrival deadlines. Evaluation reports
-normalized score, completion rate, mean/total timetable delay, on-time fraction,
-stops served, cumulative return and a collision/deadlock proxy under both
-`normal` and `delayed` conditions.
+departure spacing with reachable per-stop arrival deadlines. The builder routes
+eastbound services to reachable Central terminals and westbound services to the
+down-side departure stubs (an early build put a few returns on an up track,
+causing a head-on deadlock), and the notebook's `calibrate_deadlines()` sets each
+arrival deadline to the reference policy's normal-condition arrival + slack, so
+the greedy baseline is on time under `normal` and only late under `delayed`.
+Evaluation reports normalized score, completion rate, mean/total timetable delay,
+on-time fraction, stops served, cumulative return and a collision/deadlock proxy
+under both `normal` and `delayed` conditions.
 
 The notebook's section 7 comparison renders the scenario-1 greedy baseline under
 both conditions (`docs/comparison/scenario1_greedy_normal.gif` and

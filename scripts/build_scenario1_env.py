@@ -147,11 +147,55 @@ def _services_to_schedule_roundtrip(
         col = spec.stations["Central"]["up_main"][1]
         central_cells = [(r, col) for r in range(0, 35, 2)]
     central_col = central_cells[0][1]
+    central_rows = sorted({r for r, _ in central_cells})
     turnback_rows = sorted(r for r, c in central_cells if env.rail.is_dead_end((r, c)))
     turnback_rows = turnback_rows or [central_cells[0][0]]
     last_row = max(r for r, c in central_cells)
     turnback_set = set(turnback_rows)
     terminal_rows = sorted(r for r, c in central_cells if r not in turnback_set)
+
+    # Map a service's corridor track to the Central row it should use. The
+    # editor's platform codes do not line up with the synthetic terminus, so we
+    # derive the rows from the actual rail: an eastbound service must end at a
+    # cell that can be reached heading east, a westbound service must depart from
+    # a cell whose west exit exists. Westbound departures are only drawn on the
+    # down-side stubs (rows 30/34); using an up row causes a head-on deadlock on
+    # the corridor.
+    UP_ROW = {"up_main": 24, "up_suburban": 28, "up_local": 32}
+    DOWN_ROW = {"down_main": 26, "down_suburban": 30, "down_local": 34}
+
+    def _reachable(starts):
+        seen = set(starts)
+        stack = list(starts)
+        while stack:
+            for pos, direction in env.rail.get_successor_configurations(stack.pop()):
+                conf = ((int(pos[0]), int(pos[1])), int(direction))
+                if conf not in seen:
+                    seen.add(conf)
+                    stack.append(conf)
+        return seen
+
+    _starts = [
+        ((row, 1), direction)
+        for row in sorted(set(UP_ROW.values()) | set(DOWN_ROW.values()))
+        for direction in (EAST, WEST)
+        if env.rail.get_successor_configurations(((row, 1), direction))
+    ]
+    _reached = _reachable(_starts)
+    east_target_rows = [r for r in central_rows if ((r, central_col), EAST) in _reached]
+    west_depart_rows = [
+        r for r in central_rows
+        if env.rail.get_successor_configurations(((r, central_col), WEST))
+    ]
+    down_depart_rows = [r for r in west_depart_rows if r in set(DOWN_ROW.values())]
+
+    def _up_arrive_row(track):
+        pool = east_target_rows or terminal_rows
+        return min(pool, key=lambda r: abs(r - UP_ROW.get(track, 28)))
+
+    def _down_depart_row(return_track):
+        pool = down_depart_rows or west_depart_rows or terminal_rows
+        return min(pool, key=lambda r: abs(r - DOWN_ROW.get(return_track, 30)))
 
     def _row_for_code(code):
         try:
@@ -301,11 +345,12 @@ def _services_to_schedule_roundtrip(
             # agent ends at Central, the return trip is a separate agent spawning
             # at Central. Each follows its own trip.
             _, out_seq = _trim(out)
+            out_target_row = _up_arrive_row(track)
             out_cells: list = []
             out_groups: list = []
             for st in out_seq:
                 group = (
-                    _central_terminal_group(out_row, EAST)
+                    _central_terminal_group(out_target_row, EAST)
                     if st["station"] == "Central"
                     else _station_group(st["station"], EAST, track)
                 )
@@ -315,10 +360,7 @@ def _services_to_schedule_roundtrip(
             _add(out_groups, speed, out_ed, out_la,
                  _meta(service, "up", out_seq, out_cells, out_ed, out_la, "up"))
 
-            ret_row = _row_for_code(ret[0].get("platform", ""))
-            if ret_row not in terminal_rows:
-                ref = ret_row if ret_row is not None else terminal_rows[0]
-                ret_row = min(terminal_rows, key=lambda r: abs(r - ref))
+            ret_row = _down_depart_row(return_track)
             _, ret_seq = _trim(ret)
             ret_cells: list = []
             ret_groups: list = []
