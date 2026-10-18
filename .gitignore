@@ -27,6 +27,9 @@ checkpoints/
 *.gif
 *.mp4
 
+# GTFS feed (large ~475 MB; not committed)
+data/gtfs/
+
 # Logs / scheduler output
 *.log
 *.o*
