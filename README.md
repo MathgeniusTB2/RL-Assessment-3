@@ -21,29 +21,29 @@ disruption regime:
 
 | Scenario | Level | Services | Result |
 |---|---|---|---|
-| `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.109** (30 held-out seeds) |
+| `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.011** (30 held-out seeds, 23/30) |
 | `granville-harris-park` | 20x20 Y-link junction | 126 movements | learned policy fails; diagnosed under **The junction** |
 
 - **Algorithms:** PPO (joint `MultiDiscrete` over the fleet), A2C and DQN (per-agent).
 - **Reward:** the assessment metric itself, paid densely as a potential,
   `r_t = R(t) - R(t-1)`, which reproduces `DefaultRewards` exactly.
-- **Disruptions:** three fixed 450-step failures per episode, placed in the band
+- **Disruptions:** three fixed 220-step failures per episode, placed in the band
   between a stop's escape crossover and its platform, direction-balanced.
 
 ## Results
 
 Corridor, 30 held-out seeds (3000-3029), checkpoints selected on unseen seeds:
 
-| policy | score | completion |
-|---|---|---|
-| forward-only baseline | -0.1859 | 0.881 |
-| **joint PPO (3M steps)** | **-0.0772** | **0.968** |
+| arm | baseline | arm | delta | wins | p | completion |
+|---|---|---|---|---|---|---|
+| **PPO** | -0.0583 | **-0.0473** | **+0.0109** | 23/30 | 0.0052 | 1.000 -> 1.000 |
+| A2C | -0.0583 | -0.0583 | +0.0000 | 0/30 | 1.0000 | 1.000 -> 1.000 |
+| DQN | -0.0583 | -0.0473 | +0.0109 | 23/30 | 0.0052 | 1.000 -> 1.000 |
 
-Paired delta **+0.1087** (median +0.1099), **28/30 wins**, sign test **p < 0.0001**.
-Rows: `results/pair_compact_e.csv`.
-
-Junction: route follower 126/126 (+0.0000) vs PPO 71/126 (-0.199) under no delays —
-the timetable's junction turns are not recoverable from a local observation.
+The corridor comparison is punctuality at equal completion: all three arms and the
+baseline finish every train on all 30 seeds; PPO and DQN beat it by +0.011 (23/30). Junction: the baseline completes 126/126 at
+-0.1769, while every learned arm scores about +0.15 better by parking the fleet -
+the metric prefers cancelling to attempting the junction. Rows: `results/v2_*.csv`.
 
 ## Repository layout
 
@@ -95,7 +95,7 @@ python scripts/train_ppo.py --scenario network-simple-compact --disruption few_l
 python scripts/eval_pair.py --scenario network-simple-compact --baseline forward \
     --disruption few_long --incidents 3 --priority --observation-radius 50 \
     --model runs/compact_station_e/best_model.zip \
-    --seeds 3000,...,3029 --out results/pair_compact_e.csv
+    --seeds 3000,...,3029 --out results/v2_ppo_compact.csv
 
 # A2C / DQN and the collapse diagnostic
 python scripts/train_algo.py --algo a2c --out runs/a2c_v2

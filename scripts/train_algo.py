@@ -22,11 +22,11 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 
 
-def prepare_nb(radius: int = 50, priority: bool = True):
+def prepare_nb(radius: int = 50, priority: bool = True, scenario2: bool = False):
     import nb_harness
     import priority_obs
 
-    nb = nb_harness.load()
+    nb = nb_harness.load(scenario2=scenario2)
     if priority:
         priority_obs.install_priority_features(nb)
     cls = nb["GymTreeObsForRailEnv"]
@@ -64,7 +64,8 @@ def build_per_agent_env(nb, scenario: str, incidents: int, scale: float = 100.0)
 def evaluate(nb, model, scenario: str, incidents: int, seeds) -> dict:
     import train_ppo as T
 
-    ev = T.MetricEvaluator(nb, seeds=seeds, disruption="few_long", incidents=incidents)
+    ev = T.MetricEvaluator(nb, seeds=seeds, disruption="few_long", incidents=incidents,
+                           scenario=scenario)
     res = ev.score(lambda batch: model.predict(batch, deterministic=True)[0])
     return {k: res[k] for k in ("score", "completion", "total_delay", "delay_all")}
 
@@ -74,7 +75,8 @@ def main() -> int:
     ap.add_argument("--algo", required=True, choices=["a2c", "dqn"])
     ap.add_argument("--scenario", default="network-simple-compact")
     ap.add_argument("--incidents", type=int, default=3)
-    ap.add_argument("--timesteps", type=int, default=2_000_000)
+    ap.add_argument("--timesteps", type=int, default=1_497_600,
+                    help="agent-steps; matches the reported A2C/DQN budget")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--lr", type=float, default=7e-4)
     ap.add_argument("--n-steps", type=int, default=5,
@@ -92,7 +94,8 @@ def main() -> int:
 
     torch.set_num_threads(args.torch_threads)
 
-    nb = prepare_nb()
+    scenario2 = args.scenario == "granville-harris-park"
+    nb = prepare_nb(scenario2=scenario2)
     vec = build_per_agent_env(nb, args.scenario, args.incidents)
     print(f"vec envs {vec.num_envs}, obs {vec.observation_space.shape}, "
           f"actions {vec.action_space}", flush=True)

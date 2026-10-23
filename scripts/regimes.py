@@ -39,11 +39,12 @@ S2_STATION_CELLS = {
 S2_FIRE_CELLS = {(6, c) for c in range(11, 17)}
 # fixed hold length: the schedule slack is only a few steps, so any longer hold
 # guarantees the victim is late on every episode (a lognormal draw could land
-# inside the slack and produce a seed with no delay at all)
-# long holds: 5x the original 90-step hold. At 90 the queue often cleared inside
-# the scheduled dwell and the incident barely moved the score; 450 steps is ~45 %
-# of a compact episode, so every failure leaves a standing queue behind it.
-DURATION = 450
+# inside the slack and produce a seed with no delay at all).
+# 220 steps is the longest hold that still leaves every train enough time to
+# arrive: measured over 30 seeds, baseline completion is 1.000 on both maps
+# (delay_all 2.9k corridor, 16.8k junction). At 300+ the junction deadlocks and
+# completion falls to 0.6-0.8, which would score cancellations instead of delay.
+DURATION = 220
 
 
 def compact_geometry():

@@ -157,17 +157,20 @@ def build_train_env(nb, copies: int, scale: float, reward: bool, shaped: bool = 
 class MetricEvaluator:
     """Score a policy on the untouched metric, reusing one calibrated env."""
 
-    def __init__(self, nb, seeds=INTERNAL_EVAL_SEEDS, disruption="poisson", incidents=1):
+    def __init__(self, nb, seeds=INTERNAL_EVAL_SEEDS, disruption="poisson", incidents=1,
+                 scenario: str | None = None):
         self.nb = nb
         self.seeds = list(seeds)
         self.disruption = disruption
+        # score the map the caller trained on, not the notebook default
+        self.scenario = scenario or nb.get("SCENARIO")
         # the evaluator MUST use the same disruption regime as training, otherwise
         # the curve measures a different scenario
         condition = "delayed" if disruption == "poisson" else "normal"
-        self.parallel = nb["make_parallel_env"](scenario=nb["SCENARIO"], condition=condition)
+        self.parallel = nb["make_parallel_env"](scenario=self.scenario, condition=condition)
         self.raw = self.parallel._wrap
         if disruption == "few_long":
-            regimes.install(self.raw, nb["SCENARIO"], incidents)
+            regimes.install(self.raw, self.scenario, incidents)
         self.handles = list(self.parallel.possible_agents)
 
     def score(self, batch_policy) -> dict:

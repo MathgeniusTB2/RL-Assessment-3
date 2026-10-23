@@ -37,7 +37,7 @@ data/gtfs/
 # --- Committed artifacts (exceptions to the patterns above) ---
 !data/levels/*.pkl
 !data/levels/*.mpk
-!results/pair_compact_e.csv
+!results/v[23]_*.csv
 !results/curves/
 !results/curves/*.csv
 # runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe

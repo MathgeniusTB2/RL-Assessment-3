@@ -129,7 +129,9 @@ def sign_test_p(wins: int, losses: int) -> float:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=None, help="path to a saved SB3 PPO model")
+    ap.add_argument("--model", default=None, help="path to a saved SB3 model")
+    ap.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"],
+                    help="which SB3 class saved --model (they are not interchangeable)")
     ap.add_argument("--scenario", default=None)
     ap.add_argument("--conditions", default="delayed")
     ap.add_argument("--seeds", default="8", help="integer count (fresh entropy seeds) or comma list")
@@ -189,9 +191,10 @@ def main() -> int:
 
     model = None
     if args.model:
-        from stable_baselines3 import PPO
+        from stable_baselines3 import A2C, DQN, PPO
 
-        model = PPO.load(args.model, device="cpu")
+        loader = {"ppo": PPO, "a2c": A2C, "dqn": DQN}[args.algo]
+        model = loader.load(args.model, device="cpu")
 
         def ppo(raw, obs, handles):
             batch = np.stack([obs[h] for h in handles])
