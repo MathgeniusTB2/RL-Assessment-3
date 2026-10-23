@@ -13,10 +13,13 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-# 2  imports + constants   5  ScenarioSpec     7  GymTreeObsForRailEnv
-# 9  registry/conditions   11 env factory     13 greedy + force-stop + deadline calibration
-# 20 vec-env wrappers     29 evaluate()
-CELLS = (2, 5, 7, 9, 11, 13, 20, 29)
+# Cells the training/eval scripts need, by index in the deliverable notebook.
+# If you add or remove a cell above these, update the tuple (the comment lists
+# what each one provides).
+# 4  imports + constants   7  ScenarioSpec     9  GymTreeObsForRailEnv
+# 11 registry/conditions  13 env factory     15 greedy + force-stop + deadline calibration
+# 22 vec-env wrappers     31 evaluate()
+CELLS = (4, 7, 9, 11, 13, 15, 22, 31)
 
 
 def repo_root() -> Path:
@@ -25,7 +28,7 @@ def repo_root() -> Path:
 
 def load(notebook: str | Path | None = None, scenario2: bool = False) -> Dict[str, Any]:
     root = repo_root()
-    # cell 2 resolves data/ from the working directory; the notebook is run
+    # the setup cell resolves data/ from the working directory; the notebook is run
     # from the repo root, so mirror that.
     os.chdir(root)
     path = Path(notebook) if notebook else root / "notebooks" / "train_schedule_optimisation.ipynb"

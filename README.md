@@ -22,7 +22,7 @@ disruption regime:
 | Scenario | Level | Services | Result |
 |---|---|---|---|
 | `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.109** (30 held-out seeds) |
-| `granville-harris-park` | 20x20 Y-link junction | 126 movements | learned policy fails; diagnosed in §9 |
+| `granville-harris-park` | 20x20 Y-link junction | 126 movements | learned policy fails; diagnosed under **The junction** |
 
 - **Algorithms:** PPO (joint `MultiDiscrete` over the fleet), A2C and DQN (per-agent).
 - **Reward:** the assessment metric itself, paid densely as a potential,
@@ -78,7 +78,7 @@ source .venv/bin/activate
 jupyter lab notebooks/train_schedule_optimisation.ipynb
 ```
 
-`FULL_RUN = False` (§1) prints the recorded results instead of retraining, so the
+`FULL_RUN = False` (in **Imports and configuration**) prints the recorded results instead of retraining, so the
 notebook executes end to end in a few minutes. Set it to `True` to retrain inside
 the notebook.
 
