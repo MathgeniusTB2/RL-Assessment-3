@@ -38,6 +38,8 @@ data/gtfs/
 !data/levels/*.pkl
 !data/levels/*.mpk
 !results/v[23]_*.csv
+!results/figures/
+!results/figures/policy_*.gif
 !results/curves/
 !results/curves/*.csv
 # runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe

@@ -250,7 +250,7 @@ def main() -> int:
     ap.add_argument("--ent-coef", type=float, default=0.001)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--eval-every", type=int, default=500_000)
-    ap.add_argument("--eval-seeds", type=int, default=2)
+    ap.add_argument("--eval-seeds", type=int, default=4)
     ap.add_argument("--n-epochs", type=int, default=4)
     ap.add_argument("--torch-threads", type=int, default=4)
     ap.add_argument("--malfunction-rate", type=float, default=None,
@@ -393,7 +393,8 @@ def main() -> int:
         print(f"warm start from {args.pretrain}")
 
     csv_path = out / "eval.csv"
-    state = {"best": -np.inf, "next_eval": args.eval_every, "t0": time.time()}
+    state = {"best": -np.inf, "best_key": (-1.0, -np.inf), "next_eval": args.eval_every,
+             "t0": time.time()}
     with csv_path.open("w", newline="") as fh:
         writer = csv.writer(fh)
         writer.writerow(
@@ -428,7 +429,11 @@ def main() -> int:
                 writer.writerow(row)
                 fh.flush()
                 star = ""
-                if result["score"] > state["best"]:
+                # select on completion FIRST: the metric pays cancellation less
+                # than a jammed dispatch, so max-score alone picks parked policies
+                key = (round(result["completion"], 3), result["score"])
+                if key > state["best_key"]:
+                    state["best_key"] = key
                     state["best"] = result["score"]
                     model.save(out / "best_model")
                     star = "  *best"
@@ -451,6 +456,7 @@ def main() -> int:
         )
         fh.flush()
         state["best"] = init_result["score"]
+        state["best_key"] = (round(init_result["completion"], 3), init_result["score"])
         model.save(out / "best_model")
         print(
             f"[eval init] score={init_result['score']:.4f} "

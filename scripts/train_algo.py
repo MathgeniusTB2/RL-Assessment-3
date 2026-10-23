@@ -86,7 +86,7 @@ def main() -> int:
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--torch-threads", type=int, default=4)
     ap.add_argument("--eval-every", type=int, default=250_000)
-    ap.add_argument("--eval-seeds", default="9001,9002")
+    ap.add_argument("--eval-seeds", default="9001,9002,9003,9004")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -125,7 +125,7 @@ def main() -> int:
     from stable_baselines3.common.callbacks import BaseCallback
 
     rows = []
-    state = {"next": args.eval_every, "best": -np.inf}
+    state = {"next": args.eval_every, "best": -np.inf, "best_key": (-1.0, -np.inf)}
 
     class Cb(BaseCallback):
         def _on_step(self) -> bool:
@@ -138,7 +138,11 @@ def main() -> int:
             res = evaluate(nb, self.model, args.scenario, args.incidents, eval_seeds)
             rows.append({"timesteps": self.num_timesteps, **res})
             star = ""
-            if res["score"] > state["best"]:
+            # completion first, then score (see train_ppo): max-score alone picks
+            # the "park the fleet" policy on this metric
+            key = (round(res["completion"], 3), res["score"])
+            if key > state["best_key"]:
+                state["best_key"] = key
                 state["best"] = res["score"]
                 self.model.save(out / "best_model")
                 star = " *best"
