@@ -1,3 +1,4 @@
+# Runtime of the deliverable notebook and the training/eval scripts.
 flatland-rl
 gymnasium
 stable-baselines3
@@ -5,10 +6,10 @@ torch
 numpy
 pandas
 matplotlib
-pygame
-streamlit
+pillow
 pettingzoo
 supersuit
-pillow
+pygame
+# jupyter kernel
 ipykernel
 jupyterlab
