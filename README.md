@@ -84,6 +84,16 @@ jupyter lab notebooks/train_schedule_optimisation.ipynb
 notebook executes end to end in a few minutes. Set it to `True` to retrain inside
 the notebook.
 
+## Checks
+
+```bash
+# sign test against the reported p-values, and the disruption geometry
+python -m unittest discover -s tests
+
+# the dense reward must reproduce the metric per agent and per term
+python scripts/verify_rewards.py --policy forward --seed 2000
+```
+
 ## Reproducing the reported runs
 
 ```bash
