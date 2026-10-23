@@ -38,7 +38,7 @@ Corridor, 30 held-out seeds (3000-3029), checkpoints selected on unseen seeds:
 |---|---|---|---|---|---|---|
 | **PPO** | -0.0583 | **-0.0473** | **+0.0109** | 23/30 | 0.0052 | 1.000 -> 1.000 |
 | A2C | -0.0583 | -0.0583 | +0.0000 | 0/30 (29 ties) | 1.0000 | 1.000 -> 1.000 |
-| DQN | -0.0583 | -0.0473 | +0.0109 | 23/30 | 0.0052 | 1.000 -> 1.000 |
+| DQN | | -0.0577 | -0.0461 | +0.0116 | 24/30 | 0.0014 | 1.000 -> 1.000 |
 
 The corridor comparison is punctuality at equal completion: all three arms and the
 baseline finish every train on all 30 seeds; PPO and DQN beat it by +0.011 (23/30). Junction: the baseline completes 126/126 at
