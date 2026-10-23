@@ -43,7 +43,7 @@ Corridor, 30 held-out seeds (3000-3029), checkpoints selected on unseen seeds:
 The corridor comparison is punctuality at equal completion: all three arms and the
 baseline finish every train on all 30 seeds; PPO beats it by +0.0109 (23/30) and DQN by +0.0116 (24/30); the DQN row was re-run after the placement fix, so its baseline reads -0.0577. Junction: the baseline completes 126/126 at
 -0.1769, while every learned arm scores about +0.15 better by parking the fleet -
-the metric prefers cancelling to attempting the junction. Rows: `results/v2_*.csv`.
+the metric prefers cancelling to attempting the junction. Rows: `results/v2_*.csv`, plus `results/v3_dqn_compact.csv` for the corridor DQN row.
 
 ## Repository layout
 
