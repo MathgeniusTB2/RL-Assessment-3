@@ -1,19 +1,19 @@
 """Shared disruption regimes, one per scenario.
 
-Training, paired evaluation and the render scripts must install the SAME regime,
+Training, paired evaluation and the notebook must install the SAME regime,
 otherwise the curve and the baseline measure different scenarios (that mistake
 already produced three false positives in this project).
 
-    network-simple-compact  failure fires while the victim dwells at a platform
-                            whose (station, track) has a same-direction escape
-                            (the 7 stop types found by probe_station_access);
-                            incidents are drawn one per direction when >= 2
-    granville-harris-park   failure fires mid-route in a fixed zone - third track
-                            row, column 14 - never on a station cell, because S2
+    network-simple-compact  failures land in the band strictly between each
+                            stop's escape crossover and its platform (101 cells,
+                            from the station-access probe), so every incident is
+                            avoidable and never blocks the crossover itself;
+                            direction-balanced, sampled per episode
+    granville-harris-park   failures land mid-block on the third track row,
+                            columns 11-16, never on a station cell, because S2
                             services have no intermediate stops
 
-Both spellings of the scenario name are accepted; anything else falls back to
-the legacy mid-corridor placement.
+Three fixed 450-step holds per episode on both maps.
 """
 
 from __future__ import annotations
@@ -36,9 +36,7 @@ S2_STATION_CELLS = {
 # third track row, mid-block just west of Granville; a band of cells rather than
 # one spot, so the seed changes WHERE the failure lands while keeping it in the
 # same stretch of running line
-S2_FIRE_ROWS = {6}
-S2_FIRE_COLS = (11, 16)
-S2_FIRE_CELLS = {(6, c) for c in range(S2_FIRE_COLS[0], S2_FIRE_COLS[1] + 1)}
+S2_FIRE_CELLS = {(6, c) for c in range(11, 17)}
 # fixed hold length: the schedule slack is only a few steps, so any longer hold
 # guarantees the victim is late on every episode (a lognormal draw could land
 # inside the slack and produce a seed with no delay at all)
@@ -87,14 +85,8 @@ def is_s2(scenario: str) -> bool:
     return scenario in ("granville-harris-park", "granville_harris_park", "s2", "scenario2")
 
 
-def install(env, scenario: str, incidents: int = 2, require_follower: bool = False):
-    """Install the scenario's disruption regime on a raw RailEnv.
-
-    ``require_follower`` only applies to the compact map: when True a failure
-    waits for a train that could still take the crossover. That is the stricter,
-    more faithful rule but it fires far less often (measured: 0-2 of 2-3 per
-    episode), so training uses the platform-only rule to keep the signal.
-    """
+def install(env, scenario: str, incidents: int = 2):
+    """Install the scenario's disruption regime on a raw RailEnv."""
     if is_compact(scenario):
         # a band of avoidable cells between each escape crossover and its
         # platform, so failures land in many places but never on the crossover
@@ -113,4 +105,4 @@ def install(env, scenario: str, incidents: int = 2, require_follower: bool = Fal
             fire_cells=S2_FIRE_CELLS, fire_gap=1, duration=DURATION,
             sample_cells=True,
         )
-    return disruptions.install(env, incidents=incidents)
+    raise ValueError(f"no disruption regime for scenario {scenario!r}")

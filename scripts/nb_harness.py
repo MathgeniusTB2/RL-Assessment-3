@@ -44,26 +44,7 @@ def load(notebook: str | Path | None = None, scenario2: bool = False) -> Dict[st
         # extra-scenario registration below only applies to the S1 notebook
         return ns
 
-    # extra scenarios built by scripts/build_simple_map.py
-    ladder_level = root / "data" / "levels" / "ladder.pkl"
-    if ladder_level.exists():
-        ns["SCENARIOS"]["ladder"] = ns["ScenarioSpec"](
-            name="ladder",
-            level_path=ladder_level,
-            schedule_path=root / "data" / "schedules" / "ladder_timetable.json",
-            calibrate=False,
-        )
-
-    simple_level = root / "data" / "levels" / "network_simple.pkl"
-    if simple_level.exists():
-        ns["SCENARIOS"]["network-simple"] = ns["ScenarioSpec"](
-            name="network-simple",
-            level_path=simple_level,
-            schedule_path=root / "data" / "schedules" / "network_simple_timetable.json",
-            calibrate=False,
-        )
-
-    # same timetable, four through tracks adjacent and the ladder rows dropped
+    # the corridor every result uses (four through tracks, ladder rows dropped)
     compact_level = root / "data" / "levels" / "network_simple_compact.pkl"
     if compact_level.exists():
         ns["SCENARIOS"]["network-simple-compact"] = ns["ScenarioSpec"](

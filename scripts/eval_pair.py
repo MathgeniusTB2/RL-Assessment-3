@@ -137,7 +137,7 @@ def main() -> int:
     ap.add_argument("--disruption", default="poisson", choices=["poisson", "few_long"])
     ap.add_argument("--incidents", type=int, default=1)
     ap.add_argument("--baseline", default="notebook",
-                    choices=["forward", "notebook", "official"],
+                    choices=["forward", "notebook"],
                     help="which greedy baseline to compare against")
     ap.add_argument("--hint", action="store_true")
     ap.add_argument("--priority", action="store_true")
@@ -179,16 +179,6 @@ def main() -> int:
 
         def greedy_reset():
             pass
-    elif args.baseline == "official":
-        from official_baseline import make_official_baseline
-
-        official = make_official_baseline()
-
-        def greedy(raw, obs, handles):
-            return {h: int(a) for h, a in official(raw).items()}
-
-        def greedy_reset():
-            official.reset()
     else:
         def greedy(raw, obs, handles):
             plan = nb["greedy_actions"](raw)
