@@ -45,6 +45,8 @@ data/gtfs/
 !results/pair_compact_e.csv
 !results/curves/
 !results/curves/*.csv
+# runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe
+!results/station_access_compact.json
 !docs/comparison/*.gif
 !docs/race_s2_normal_every_step.gif
 

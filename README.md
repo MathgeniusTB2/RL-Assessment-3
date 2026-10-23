@@ -88,9 +88,11 @@ requirements.txt
 ```
 
 Shipped evidence is deliberately small: `results/SUMMARY.md`,
-`results/pair_compact_e.csv` (the 30-seed paired test) and
-`results/curves/*.csv` (training curves for the two final arms). Model checkpoints
-(~9 MB each) and `runs/` are **not** committed; the commands below regenerate them.
+`results/pair_compact_e.csv` (the 30-seed paired test),
+`results/curves/*.csv` (training curves for the two final arms) and
+`results/station_access_compact.json` (the crossover probe `scripts/regimes.py`
+reads at runtime). Model checkpoints (~9 MB each) and `runs/` are **not**
+committed; the commands below regenerate them.
 
 ## Setup
 
