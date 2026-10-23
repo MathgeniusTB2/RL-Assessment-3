@@ -148,6 +148,11 @@ def install(env, incidents: int = 2, up_rows=None, avoid_cells=None,
             ]
         state["zone_fired"] = set()
         state["last_fire"] = -10 ** 6
+        # `fired` drives the direction-balance preference, so it must be cleared
+        # too: leaving it to accumulate made a seed's episode depend on every
+        # episode before it in the process, which broke the paired comparison
+        # (the same baseline seed scored differently in two arm files).
+        state["fired"] = []
         return out
 
     def step(*args, **kwargs):
