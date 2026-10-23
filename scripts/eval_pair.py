@@ -37,9 +37,13 @@ class Episode:
         self.nb = nb
         self.disruption = disruption
         self.incidents = incidents
-        self.parallel = nb["make_parallel_env"](
-            scenario=scenario, condition="delayed" if disruption == "poisson" else "normal"
-        )
+        # `condition` is what the caller asked for. The deterministic regime is
+        # layered on a NORMAL env, so that path still overrides it - but the
+        # poisson path must honour the request, otherwise `--conditions
+        # delayed,normal` silently runs the same condition twice.
+        base_condition = condition if disruption == "poisson" else "normal"
+        self.condition = base_condition
+        self.parallel = nb["make_parallel_env"](scenario=scenario, condition=base_condition)
         if disruption == "few_long":
             import regimes
 
@@ -144,7 +148,6 @@ def main() -> int:
     ap.add_argument("--hint", action="store_true")
     ap.add_argument("--priority", action="store_true")
     ap.add_argument("--observation-radius", type=int, default=None)
-    ap.add_argument("--deterministic", action="store_true", default=True)
     args = ap.parse_args()
 
     scenario2 = args.scenario == "granville-harris-park"
@@ -178,16 +181,10 @@ def main() -> int:
 
         def greedy(raw, obs, handles):
             return {h: int(RailEnvActions.MOVE_FORWARD.value) for h in handles}
-
-        def greedy_reset():
-            pass
     else:
         def greedy(raw, obs, handles):
             plan = nb["greedy_actions"](raw)
             return {h: int(plan.get(h, 0)) for h in handles}
-
-        def greedy_reset():
-            pass
 
     model = None
     if args.model:
@@ -207,7 +204,6 @@ def main() -> int:
     for condition in args.conditions.split(","):
         ep = Episode(nb, scenario, condition, args.disruption, args.incidents)
         for seed in seeds:
-            greedy_reset()
             g = ep.run(seed, greedy)
             rows.append({"condition": condition, "policy": "greedy", "seed": seed, **g})
             if ppo is not None:

@@ -13,7 +13,7 @@ already produced three false positives in this project).
                             columns 11-16, never on a station cell, because S2
                             services have no intermediate stops
 
-Three fixed 450-step holds per episode on both maps.
+Three fixed 220-step holds per episode on both maps (see ``DURATION``).
 """
 
 from __future__ import annotations
@@ -100,7 +100,7 @@ def install(env, scenario: str, incidents: int = 2):
     if is_s2(scenario):
         return disruptions.install(
             env, incidents=incidents, avoid_cells=S2_STATION_CELLS,
-            # with a 450-step hold the junction jams within a few steps of the
+            # with a long hold the junction jams within a few steps of the
             # first failure, so all three have to land almost at once (gap 1);
             # otherwise no train ever reaches the third cell and it never fires
             fire_cells=S2_FIRE_CELLS, fire_gap=1, duration=DURATION,

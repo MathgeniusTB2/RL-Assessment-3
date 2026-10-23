@@ -1,7 +1,8 @@
 """Train A2C or DQN on the compact scenario, per-agent env.
 
 Why this exists: `train_ppo.py` builds a JOINT action space (MultiDiscrete over
-all agents via concat_vec_envs), which is why its PPO reaches -0.064. DQN does not
+all agents via concat_vec_envs), which is why its PPO reaches -0.0473 on the
+corridor. DQN does not
 support MultiDiscrete at all, so A2C and DQN run on the other wiring in the
 project - `pettingzoo_env_to_vec_env_v1` WITHOUT concat, i.e. one env slot per
 agent with Discrete(5). The scenario, disruption regime, reward, observation and
@@ -78,7 +79,8 @@ def main() -> int:
     ap.add_argument("--timesteps", type=int, default=1_497_600,
                     help="agent-steps; matches the reported A2C/DQN budget")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--lr", type=float, default=7e-4)
+    ap.add_argument("--lr", type=float, default=7e-4, help="A2C learning rate (DQN uses --dqn-lr)")
+    ap.add_argument("--dqn-lr", type=float, default=1e-4, help="DQN learning rate")
     ap.add_argument("--n-steps", type=int, default=5,
                     help="A2C rollout length per env slot (SB3 default 5)")
     ap.add_argument("--ent-coef", type=float, default=0.01)
@@ -115,7 +117,7 @@ def main() -> int:
     else:
         from stable_baselines3 import DQN
 
-        model = DQN("MlpPolicy", vec, learning_rate=1e-4, gamma=args.gamma,
+        model = DQN("MlpPolicy", vec, learning_rate=args.dqn_lr, gamma=args.gamma,
                     buffer_size=200_000, learning_starts=10_000, batch_size=64,
                     train_freq=4, gradient_steps=1, target_update_interval=1000,
                     exploration_fraction=0.2, exploration_final_eps=0.02,

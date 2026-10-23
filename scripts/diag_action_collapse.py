@@ -19,6 +19,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--a2c", default="runs/v2_a2c_compact/best_model.zip")
+    ap.add_argument("--dqn", default="runs/v3_dqn_compact/best_model.zip")
+    ap.add_argument("--ppo", default="runs/v2_ppo_compact/best_model.zip")
+    ap.add_argument("--scenario", default="network-simple-compact")
+    ap.add_argument("--seed", type=int, default=9001)
+    args = ap.parse_args()
+
     from flatland.envs.step_utils.states import TrainState
     from stable_baselines3 import A2C, DQN, PPO
 
@@ -37,11 +47,12 @@ def main() -> int:
 
     cls.__init__ = patched
 
-    def episode(policy_fn, seed=9001):
-        p = nb["make_parallel_env"](scenario="network-simple-compact",
+    def episode(policy_fn, seed=None):
+        seed = args.seed if seed is None else seed
+        p = nb["make_parallel_env"](scenario=args.scenario,
                                     condition="normal", seed=seed)
         raw = p._wrap
-        regimes.install(raw, "network-simple-compact", 3)
+        regimes.install(raw, args.scenario, 3)
         obs, _ = p.reset(seed=seed)
         handles = list(p.possible_agents)
         hist = collections.Counter()
@@ -74,11 +85,10 @@ def main() -> int:
         "forward-only": lambda o, hs: {h: 2 for h in hs},
         "random": lambda o, hs: {h: int(rng.integers(0, 5)) for h in hs},
     }
-    for name, path in (("a2c", "runs/a2c_v2/best_model.zip"),
-                       ("dqn", "runs/dqn_v2/best_model.zip"),
-                       ("ppo", "runs/compact_station_e/best_model.zip")):
+    for name, path in (("a2c", args.a2c), ("dqn", args.dqn), ("ppo", args.ppo)):
         p = Path(path)
         if not p.exists():
+            print(f"{name.upper():<13} skipped: {path} not found")
             continue
         loader = {"a2c": A2C, "dqn": DQN, "ppo": PPO}[name].load
         policies[name.upper()] = from_model(loader(str(p), device="cpu"))

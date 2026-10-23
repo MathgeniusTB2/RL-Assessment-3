@@ -331,7 +331,9 @@ def main() -> int:
 
     config = {
         "scenario": nb["SCENARIO"],
-        "condition": "delayed",
+        # few_long installs the deterministic regime on a NORMAL env; only the
+        # poisson path actually runs the env's own delayed condition
+        "condition": "delayed" if args.disruption == "poisson" else "normal",
         "timesteps": args.timesteps,
         "copies": args.copies,
         "scale": args.scale,
@@ -440,7 +442,7 @@ def main() -> int:
                 print(
                     f"[eval {self.num_timesteps}] score={result['score']:.4f} "
                     f"compl={result['completion']:.3f} delay={result['total_delay']:.0f} "
-                    f"EV={row[5]} ent={row[6]}{star}",
+                    f"delay_all={row[5]:.0f} EV={row[6]} ent={row[7]}{star}",
                     flush=True,
                 )
 

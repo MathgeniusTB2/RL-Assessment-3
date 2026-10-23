@@ -111,6 +111,14 @@ def load(s1_nb: Dict[str, Any]) -> Dict[str, Any]:
         import gymnasium as gym
         from flatland.ml.pettingzoo.wrappers import PettingzooFlatland
 
+        if not force_stop:
+            # setup_environment installs the env-enforced stop reflex itself, so
+            # there is no `make_env`-only path here to hand back. Fail loudly
+            # instead of accepting the flag and ignoring it.
+            raise ValueError(
+                "the Scenario2 notebook installs the stop reflex inside "
+                "setup_environment; force_stop=False is not supported on S2"
+            )
         env = _fresh_env(condition, seed)
         parallel = PettingzooFlatland(env).parallel_env()
         # the .mpk has no agents, so wrap.number_of_agents is 0 and the wrapper
