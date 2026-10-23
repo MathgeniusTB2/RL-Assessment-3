@@ -14,208 +14,171 @@ Mini-project (40%) for 43008 Reinforcement Learning (Spring 2026).
 
 ## Overview
 
-We train multi-agent reinforcement learning policies to optimise train schedules
-under disruptions. The environment is [Flatland](https://flatland.aicrowd.com/intro.html),
-a gridworld toolkit for multi-agent RL developed with Swiss Federal Railways (SBB).
+Multi-agent reinforcement learning policies that optimise train schedules under
+disruptions, on [Flatland](https://flatland.aicrowd.com/intro.html) (a gridworld
+toolkit developed with Swiss Federal Railways) populated from real TfNSW GTFS data.
 
-- **Primary scenario:** Central-Strathfield (Main Suburban corridor), the 92x37
-  turnback level, run on the real round-trip schedule.
-- **Secondary scenario (planned):** Granville-Harris Park (Main Western
-  junction), not yet implemented.
-- **Disruptions:** stochastic malfunctions (track faults, maintenance, weather holds).
-- **Algorithms:** PPO (primary), A2C, DQN, one shared policy across agents.
-- **Reward:** Flatland's shaped `DefaultRewards` (punctuality + schedule
-  adherence).
-- **Interface:** Flatland's built-in renderer (headless PILSVG for figures).
+| Scenario | Level | Services | Role |
+|---|---|---|---|
+| `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **Primary.** Every reported result is on this map. |
+| `central-strathfield` | 92x37 turnback level | 74 | Full-size corridor; the source the compact map is trimmed from. |
+| `granville-harris-park` | 20x20 Y-link junction | 126 movements | Negative result: per-agent RL cannot arbitrate the junction. |
+
+- **Disruptions:** timetable failures placed in the band between a stop's escape
+  crossover and its platform (never on the crossover, never at a station),
+  direction-balanced, three per episode with fixed 450-step holds.
+- **Algorithms:** PPO (joint `MultiDiscrete` action over the whole fleet), plus A2C
+  and DQN as per-agent baselines: one shared policy across agents.
+- **Reward:** a dense *metric potential* (`r_t = sum_a [R_a(t) - R_a(t-1)]`) that
+  reproduces Flatland's `DefaultRewards` exactly, so the shaped reward optimises the
+  same objective the score is computed from.
+- **Interface:** Flatland's built-in renderer, headless PILSVG.
 
 ## Deliverable
 
-`notebooks/train_schedule_optimisation.ipynb` is the primary code deliverable (the
-assignment prefers a Colab / IPython notebook). It holds the tree-observation
-builder, the environment factory (with the env-enforced stop reflex), the greedy
-baseline, the PettingZoo/SuperSuit wrappers and the evaluation/plotting code,
-with no `src/` imports.
+`notebooks/train_schedule_optimisation.ipynb` is the code deliverable: the
+tree-observation builder, the environment factory (with the env-enforced stop
+reflex), the disruption regime, the metric reward, the greedy/route-follower
+baselines, the PettingZoo/SuperSuit wrappers, PPO/A2C/DQN, the evaluation harness
+and every figure and table in the report. With `FULL_RUN = False` (the default) it
+executes end to end in minutes and prints the recorded numbers; set it to `True` to
+retrain inside the notebook.
 
-The scenario is a **prebuilt Flatland env** (rail + fleet + timetable) plus its
-source schedule, both read from `data/`, so run the notebook from the repository
-root:
+## Results
 
-- `data/levels/central_strathfield.pkl`: the prebuilt env loaded by the notebook.
-- `data/schedules/central_strathfield_roundtrips.json`: the source timetable.
-- `data/levels/central_strathfield_rail.mpk`: the rail grid used to build the env.
+**Corridor, 30 held-out seeds (3000-3029)** — checkpoints selected on seeds
+9001/9002, so these seeds are unseen:
 
-Build (or rebuild) the env before running the notebook:
+| policy | score | completion |
+|---|---|---|
+| forward-only baseline (never changes track) | -0.1859 | 0.881 |
+| **joint PPO, 3M steps** | **-0.0772** | **0.968** |
 
-```bash
-python scripts/build_scenario1_env.py
-```
+Paired delta **+0.1087** (median +0.1099), **28/30 wins**, sign test **p = 0.0000**.
+Rows: `results/pair_compact_e.csv`.
+
+**Junction (Granville-Harris Park)** — the learned policy does not work here:
+
+| policy | normal | delayed |
+|---|---|---|
+| scripted route follower | **126/126, +0.0000** | 76/126, -0.177 |
+| joint PPO | 71/126, -0.199 | 60/126, -0.259 |
+
+PPO loses 55 trains with no delays at all: the timetable encodes junction turns as
+an explicit `route` dict, and a local tree observation does not expose them.
+
+**A2C and DQN** run end to end but collapse to a constant action (A2C: `MOVE_LEFT`
+100%, DQN: `STOP_MOVING` 100%), so the evaluator distinguishes four policies with
+four different scores while the policies themselves stop discriminating.
 
 ## Repository layout
 
 ```
-notebooks/      # the deliverable (observation + env + wrappers + algorithms)
-data/levels/    # rail grid (source) + prebuilt env (loaded by the notebook)
-data/schedules/ # source schedule(s)
-scripts/        # scenario/env build + GTFS schedule extraction + interface render
-docs/           # report figures (interface render, comparison GIFs)
-results/        # generated: figures and training curves (gitignored)
+notebooks/                  # the deliverable
+  train_schedule_optimisation.ipynb
+  Scenario2/Scenario2.ipynb # Scenario 2 assembly (junior notebook)
+data/
+  levels/                   # prebuilt Flatland envs (loaded by the notebook)
+  schedules/                # timetables extracted from GTFS
+  gtfs/                     # TfNSW GTFS feed (NOT committed, ~1.4 GB)
+scripts/                    # scenario builders + the training/eval entry points
+docs/                       # report figures (Part-D renders, comparison GIF)
+results/                    # the evidence behind the reported tables
+requirements.txt
 ```
 
-`scripts/` builds the `data/` artifacts and is kept for provenance. The schedule
-is assembled once into the prebuilt env, so the notebook stays small and readable.
+Shipped evidence is deliberately small: `results/SUMMARY.md`,
+`results/pair_compact_e.csv` (the 30-seed paired test) and
+`results/curves/*.csv` (training curves for the two final arms). Model checkpoints
+(~9 MB each) and `runs/` are **not** committed; the commands below regenerate them.
 
 ## Setup
 
-We use [uv](https://docs.astral.sh/uv/) to manage the Python environment.
-Flatland (`flatland-rl`) requires Python 3.10+.
+Flatland needs Python 3.10+ (developed on 3.11).
 
 ```bash
-# full environment (Flatland + Stable-Baselines3 + torch + PettingZoo/SuperSuit)
 uv venv --python 3.11 .venv
 uv pip install --python .venv -r requirements.txt
 source .venv/bin/activate
-
-# register the venv as a Jupyter kernel for the notebook
-.venv/bin/python -m ipykernel install --user \
-    --name rl-assessment-3 --display-name "Python 3.11 (RL Assessment 3)"
-
-# launch from the repo root (the notebook reads data/)
-uv run jupyter lab notebooks/train_schedule_optimisation.ipynb
 ```
 
-The notebook's `kernelspec` is pinned to `rl-assessment-3`, so it uses `.venv`
-(where Flatland and SB3 are installed) rather than the system Python. It resolves
-`data/` from the repository root, so start Jupyter from there.
-
-## Training
-
-The algorithm implementations are **TODO**: see
-`notebooks/train_schedule_optimisation.ipynb` (section 5) for the PPO / A2C / DQN
-stubs. The environment, vectorisation (PettingZoo/SuperSuit), reward normalisation
-(`VecNormalize`) and evaluation infrastructure (score, completion rate, timetable
-delay) are ready to train against.
-
-Each algorithm should share one policy across agents and log
-`step, normalized_score, completion_rate` to `results/<algo>/<run>/eval.csv`; the
-notebook's section 7 comparison plots every run automatically.
-
-The notebook follows the official Flatland SB3 baseline
-(`flatland/ml/pettingzoo/examples/flatland_pettingzoo_stable_baselines.py`):
-tree observation depth **3**, shortest-path predictor depth **50**, PPO
-`MlpPolicy` with **lr 1e-3, batch 256, 8 envs, no `VecNormalize`**. The
-observation is Flatland's flattened normalized tree (1020-d at depth 3).
-
-Scenario 1 is dense: the round-trip schedule yields 74 agents on the 92x37 grid,
-so the greedy baseline completes about 0.66 of them under `normal` and 0.57 under
-`delayed`. That leaves real headroom for the algorithms to beat the baseline.
+Run Jupyter from the repository root: the notebook resolves `data/` upwards from the
+working directory.
 
 ```bash
-# full environment (Flatland + Stable-Baselines3 + torch + PettingZoo/SuperSuit)
-uv pip install --python .venv -r requirements.txt
+jupyter lab notebooks/train_schedule_optimisation.ipynb
 ```
 
-### Deployment (AWS SageMaker)
-
-Per the Part-B plan, full-scale training runs on **AWS SageMaker (GPU)** with
-PyTorch via a scripted SageMaker training job that the examiner can re-run.
-Trained policies are exported and demonstrated locally in
-`notebooks/train_schedule_optimisation.ipynb` using Flatland's renderer, with a
-recorded video prepared for the presentation. The algorithm entry points in the
-notebook (section 5) are currently TODO.
-
-Notes:
-- Use SuperSuit's multiprocessing for data collection (`num_cpus > 0`); on macOS
-  force the `fork` start method to avoid a `spawn` deadlock.
-- Flatland ships Cython-accelerated hot paths, so there is no extra build step.
-  Threads do not help (the env step holds the GIL); use processes.
-- `notebooks/train_schedule_optimisation.ipynb` (section 6) provides a
-  framework-agnostic `evaluate(policy_fn=None)` (greedy by default) reporting
-  score, completion, mean/total timetable delay, on-time fraction, **stops
-  served**, cumulative return and a collision/deadlock proxy. `evaluate_seeds`
-  runs it once per seed in `SEEDS` (section 1) and reports mean +/- std; section
-  6.1 compares the greedy baseline under `normal` and `delayed` across the seeds.
-- Flatland only counts an intermediate stop as served if the train is `STOPPED`
-  at the waypoint. The notebook's **force-stop reflex** (default on) does this
-  automatically; with `force_stop=False` a policy must learn to stop itself or
-  lose the `intermediate_not_served` penalty.
-
-## Environments
-
-The notebook exposes one factory over a **scenario registry** and **operating
-conditions**:
-
-```python
-FORCE_STOP # env-enforce scheduled stops (default True; see section 2.4)
-SCENARIOS  # "central-strathfield"; "granville-harris-park" is a TODO (section 9)
-CONDITIONS # "normal" (deterministic) | "delayed" (Poisson malfunctions, 1/540)
-
-env = make_env(SCENARIO, CONDITION, seed=SEED)     # RailEnv: render / step
-make_parallel_env(SCENARIO, CONDITION, seed=...)   # PettingZoo: evaluation
-build_vec_env(SCENARIO, CONDITION, ...)            # SuperSuit VecEnv: training
-evaluate(policy_fn=None, SCENARIO, CONDITION)      # score / delay / return
-```
-
-`delayed` injects Poisson malfunctions via the env's effects generator;
-`normal` is deterministic. A train changes track only via `MOVE_LEFT` /
-`MOVE_RIGHT` at switch cells, not via the line.
-
-`FORCE_STOP` (default on) env-enforces scheduled stops: a train at a stop cell is
-forced to `STOP_MOVING` and held for the scheduled dwell, so the policy never has
-to learn to stop. Pass `force_stop=False` to leave stopping to the policy.
-
-`SCENARIO` and `CONDITION` are set once in section 1 (defaults
-`"central-strathfield"` / `"normal"`), so every constructor picks up the same
-setting. Adding scenario 2 means adding its level and schedule under `data/`,
-extending the build script to assemble its env, and replacing one registry entry.
-
-## Scenario 1 (Central-Strathfield, round-trip schedule)
-
-Scenario 1 uses the 92x37 Central-Strathfield turnback level and the real
-round-trip schedule: every heavy-rail service (T1, T2, T3, T9, CCN, BMT) that
-crosses the corridor in the 16:00-19:00 window, paired into physical round trips
-(out to Central, reverse at a dead-end platform, return to Strathfield). The
-schedule is extracted from the local Greater Sydney GTFS bundle and then assembled
-into the prebuilt env:
+## Reproducing the results
 
 ```bash
-# 1. rebuild the round-trip schedule (defaults: normal Thursday 2026-09-24, 16:00-19:00)
-python scripts/build_scenario1_roundtrips.py --date 2026-09-24 --window 16:00-19:00
+# corridor: the reported result (3M joint PPO, ~35 min on one GPU)
+python scripts/train_ppo.py --scenario network-simple-compact --disruption few_long \
+    --incidents 3 --reward metric --shaping --priority --observation-radius 50 \
+    --arrival-bonus 50 --stuck-penalty 1 --timesteps 3000000 \
+    --eval-every 250000 --out runs/compact_station_e
 
-# 2. assemble the prebuilt env (rail grid + schedule -> agents + timetable)
-python scripts/build_scenario1_env.py
+# the paired test on held-out seeds
+python scripts/eval_pair.py --scenario network-simple-compact --baseline forward \
+    --disruption few_long --incidents 3 --priority --observation-radius 50 \
+    --model runs/compact_station_e/best_model.zip \
+    --seeds 3000,...,3029 --out results/pair_compact_e.csv
 
-# 3. run the deliverable from the repo root
-jupyter notebook notebooks/train_schedule_optimisation.ipynb
+# A2C / DQN and the collapse diagnostic
+python scripts/train_algo.py --algo a2c --out runs/a2c_v2
+python scripts/diag_action_collapse.py
 ```
 
-Timing model: 1 Flatland step = 20 s; express speed 1.0, all-stops 0.5; real
-departure spacing with reachable per-stop arrival deadlines. The builder routes
-eastbound services to reachable Central terminals and westbound services to the
-down-side departure stubs (an early build put a few returns on an up track,
-causing a head-on deadlock), and the notebook's `calibrate_deadlines()` sets each
-arrival deadline to the reference policy's normal-condition arrival + slack, so
-the greedy baseline is on time under `normal` and only late under `delayed`.
-Evaluation reports normalized score, completion rate, mean/total timetable delay,
-on-time fraction, stops served, cumulative return and a collision/deadlock proxy
-under both `normal` and `delayed` conditions.
+Scenario construction (only needed if the maps or timetables are rebuilt):
 
-The notebook's section 7 comparison renders the scenario-1 greedy baseline under
-both conditions (`docs/comparison/scenario1_greedy_normal.gif` and
-`scenario1_greedy_delayed.gif`) and overlays the training metrics of each
-algorithm against the normal baseline. Scenario 2 (Granville-Harris Park) is
-pending (section 9 stub), so the side-by-side corridor comparison will activate
-once its `SCENARIOS` entry is filled in.
+```bash
+python scripts/build_scenario1_env.py        # central-strathfield env from its level + round trips
+python scripts/build_simple_map.py --compact # the 87x8 corridor used by every result
+```
+
+`scripts/nb_harness.py` execs notebook cells directly, so the notebook stays the
+single source of truth for the environment, reward and evaluation code.
+
+## Notebook map
+
+| Section | Contents |
+|---|---|
+| 1 | Setup, paths, runtime budget (`FULL_RUN`) |
+| 2 | Scenario registry, environment factory, tree observation, greedy baseline |
+| 3 | The round-trip schedule and the map render |
+| 4 | PettingZoo to SuperSuit wrappers |
+| 5 | PPO (joint), A2C, DQN |
+| 6 | Evaluation: score, completion, delay, on-time, stops served |
+| 7 | Greedy baseline and training-metric comparison |
+| 8 | Save / load |
+| 9 | Scenario 2 (Granville-Harris Park) and why it fails |
+| 10 | Notes |
+| 11 | The disruption regime (what "delayed" means here) |
+| 12 | Results and limitations |
+| 13 | Reproducibility |
+
+## Two metric properties worth knowing
+
+- **`normal` is a ceiling by construction** on the calibrated scenario:
+  `calibrate_deadlines()` sets each deadline to the reference policy's own arrival
+  plus one slack, so greedy scores exactly 0.0000. Headroom exists only under
+  `delayed`, and every claim in this project is delayed-only.
+- **"Never depart" is the value-optimal policy for a weak learner**: a cancelled
+  train costs about -100 while one dispatched into a jammed junction costs about
+  -600, so the metric itself punishes dispatch until the policy can avoid
+  deadlocks. That basin explains the A2C/DQN collapses and the repeated PPO
+  collapses during development.
 
 ## Status
 
-- [x] Environment setup (Flatland demo, training env)
-- [x] PettingZoo/SuperSuit vectorisation + evaluation/plot infrastructure
-- [x] Scenario 1 (Central-Strathfield) with real TfNSW round-trip schedule + delay metrics
-- [x] Force-stop reflex (env-enforced scheduled stops)
-- [ ] Implement PPO
-- [ ] Implement A2C
-- [ ] Implement DQN
-- [ ] Custom scenario 2 (Granville-Harris Park)
-- [ ] Training + hyperparameter tuning
-- [ ] Evaluation on hold-out scenarios (normal vs delayed)
-- [ ] GUI / dashboard and demo
+- [x] Environment setup, scenario registry and observation
+- [x] Central-Strathfield from the real TfNSW round-trip schedule
+- [x] Granville-Harris Park Y-link junction (hand-painted level, 126 movements)
+- [x] Condensed 87x8 corridor used for all results
+- [x] Env-enforced stop reflex and multi-target reset fix
+- [x] Disruption regime: band placement, 450-step holds, direction balance
+- [x] Metric-potential dense reward (verified exact per term against `DefaultRewards`)
+- [x] PPO, A2C, DQN implementations
+- [x] 30-seed paired evaluation with sign test
+- [x] Part-D interface figures and reports
+- [x] Final report, presentation and peer reviews
