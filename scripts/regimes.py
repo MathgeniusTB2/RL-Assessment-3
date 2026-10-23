@@ -49,7 +49,9 @@ DURATION = 220
 
 def compact_geometry():
     """(platform cells, commit crossover column) from the accessibility probe."""
-    data = json.load(open(REPO / "results" / "station_access_compact.json"))
+    path = REPO / "results" / "station_access_compact.json"
+    with path.open() as fh:
+        data = json.load(fh)
     cells, commit = set(), {}
     for row in data:
         if not row.get("alt_available") or row.get("commit_from_col") is None:
