@@ -13,6 +13,12 @@ potential installed exactly as ``train_ppo`` installs it - and compares.
 
 Exit code 0 means every per-agent total and every per-term total agrees to
 ``--tol`` (default 1e-9); exit code 1 prints the offenders.
+
+``--policy never`` is the one known exception: every train stays off-map, and the
+metric charges the cancellation lump at episode end while the potential charges it
+at the first step the train could have departed, so the totals differ by about 1 %
+of that lump and the script reports FAIL. That deviation is documented in the
+report's Section 3.2; the other three policies agree exactly.
 """
 
 from __future__ import annotations

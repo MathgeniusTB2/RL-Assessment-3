@@ -1,7 +1,7 @@
 """The disruption regime's geometry and its guards.
 
-The band size is the number the report quotes (101 cells) and the value the
-station-access probe ships, so this test fails if either drifts.
+The band size is the value the shipped regime and the station-access probe
+produce (101 cells), so this test fails if either drifts.
 
 Run from the repository root::
 
