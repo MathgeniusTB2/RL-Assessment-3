@@ -8,6 +8,7 @@ potential installed exactly as ``train_ppo`` installs it - and compares.
 
     python scripts/verify_rewards.py                 # forward-only, seed 2000
     python scripts/verify_rewards.py --policy greedy --seed 2001
+    python scripts/verify_rewards.py --policy never          # cancellation-only rollout
     python scripts/verify_rewards.py --scenario granville-harris-park --policy notebook
 
 Exit code 0 means every per-agent total and every per-term total agrees to
@@ -103,6 +104,12 @@ def rollout(nb, parallel, policy: str, seed: int) -> dict:
         def act(_raw, _obs, hs):
             return {h: int(rng.integers(0, 5)) for h in hs}
 
+    elif policy == "never":
+        # DO_NOTHING for every train: nothing departs, so the metric pays the
+        # cancellation lump for every agent - the rollout the report cites
+        def act(_raw, _obs, hs):
+            return {h: 0 for h in hs}
+
     else:
         raise SystemExit(f"unknown policy {policy!r}")
 
@@ -121,7 +128,8 @@ def rollout(nb, parallel, policy: str, seed: int) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", default="network-simple-compact")
-    ap.add_argument("--policy", default="forward", choices=["forward", "greedy", "random"])
+    ap.add_argument("--policy", default="forward",
+                    choices=["forward", "greedy", "random", "never"])
     ap.add_argument("--seed", type=int, default=2000)
     ap.add_argument("--incidents", type=int, default=3)
     ap.add_argument("--tol", type=float, default=1e-9)

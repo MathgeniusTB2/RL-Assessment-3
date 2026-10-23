@@ -208,9 +208,10 @@ def main() -> int:
             rows.append({"condition": condition, "policy": "greedy", "seed": seed, **g})
             if ppo is not None:
                 p = ep.run(seed, ppo)
-                rows.append({"condition": condition, "policy": "ppo", "seed": seed, **p})
+                rows.append({"condition": condition, "policy": args.algo, "seed": seed, **p})
                 print(
-                    f"  {condition} seed={seed:<12} greedy={g['score']:+.4f} ppo={p['score']:+.4f} "
+                    f"  {condition} seed={seed:<12} greedy={g['score']:+.4f} "
+                    f"{args.algo}={p['score']:+.4f} "
                     f"delta={p['score'] - g['score']:+.4f} "
                     f"(compl {g['completion']:.3f} -> {p['completion']:.3f})",
                     flush=True,
@@ -237,7 +238,7 @@ def main() -> int:
         )
         if ppo is None:
             continue
-        p = [r for r in sub if r["policy"] == "ppo"]
+        p = [r for r in sub if r["policy"] == args.algo]
         deltas = np.array([b["score"] - a["score"] for a, b in zip(g, p)])
         wins = int((deltas > 0).sum())
         losses = int((deltas < 0).sum())

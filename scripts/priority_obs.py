@@ -60,6 +60,10 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
     import gymnasium as gym
 
     base_cls = nb["GymTreeObsForRailEnv"]
+    if getattr(base_cls, "n_priority", 0):
+        # idempotent: the deliverable notebook installs this block as well, and
+        # nb_harness execs that cell before a CLI trainer asks for it again
+        return
     n_extra = int(getattr(base_cls, "n_priority", 0)) or N_PRIORITY
 
     class PriorityObs(base_cls):

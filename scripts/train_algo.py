@@ -1,13 +1,13 @@
 """Train A2C or DQN on the compact scenario, per-agent env.
 
-Why this exists: `train_ppo.py` builds a JOINT action space (MultiDiscrete over
-all agents via concat_vec_envs), which is why its PPO reaches -0.0473 on the
-corridor. DQN does not
-support MultiDiscrete at all, so A2C and DQN run on the other wiring in the
-project - `pettingzoo_env_to_vec_env_v1` WITHOUT concat, i.e. one env slot per
-agent with Discrete(5). The scenario, disruption regime, reward, observation and
-evaluator are identical to the PPO run, so each algorithm is comparable to the
-forward-only baseline on the same seeds.
+Why this exists: both wirings are per-agent `Discrete(5)` - SuperSuit's
+MarkovVectorEnv takes its action space from a single agent - so this module does
+NOT differ from `train_ppo.py` by the action space. It differs by the number of
+copies of the fleet (one here, two there) and by the SB3 class, because
+`SB3VecEnvWrapper` handles SuperSuit's reset payload for the off-policy and A2C
+code paths. The scenario, disruption regime, reward, observation and evaluator
+are identical to the PPO run, so each algorithm is comparable to the forward-only
+baseline on the same seeds.
 
     python scripts/train_algo.py --algo a2c --timesteps 2000000 --out runs/a2c_compact
 """

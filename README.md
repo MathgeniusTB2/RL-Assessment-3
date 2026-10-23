@@ -24,7 +24,7 @@ disruption regime:
 | `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.011** (30 held-out seeds, 23/30) |
 | `granville-harris-park` | 20x20 Y-link junction | 126 movements | learned policy fails; diagnosed under **The junction** |
 
-- **Algorithms:** PPO (joint `MultiDiscrete` over the fleet), A2C and DQN (per-agent).
+- **Algorithms:** PPO (two copies of the fleet, 104 per-agent `Discrete(5)` slots), A2C and DQN (one copy, 52 slots).
 - **Reward:** the assessment metric itself, paid densely as a potential,
   `r_t = R(t) - R(t-1)`, which reproduces `DefaultRewards` exactly.
 - **Disruptions:** three fixed 220-step failures per episode, placed in the band
@@ -87,7 +87,7 @@ the notebook.
 ## Reproducing the reported runs
 
 ```bash
-# corridor: 3M joint PPO, ~35 min on one GPU
+# corridor: 3 M-step PPO, ~35 min on 16 CPU cores
 python scripts/train_ppo.py --scenario network-simple-compact --disruption few_long \
     --incidents 3 --reward metric --shaping --priority --observation-radius 50 \
     --arrival-bonus 50 --stuck-penalty 1 --timesteps 3000000 \
