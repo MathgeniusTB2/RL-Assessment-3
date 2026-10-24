@@ -203,11 +203,6 @@ def audit() -> None:
     plt.close(fig)
 
 
-# ------------------------------------------------------------------ junction frame
-def junction_frame() -> None:
-    frame("junction_route_follower.gif", 156).save(OUT / "fig_junction_frame.png")
-
-
 if __name__ == "__main__":
     workflow()
     curves()
@@ -215,5 +210,4 @@ if __name__ == "__main__":
     junction_pair()
     delta()
     audit()
-    junction_frame()
     print("figures written to", OUT)
