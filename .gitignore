@@ -48,6 +48,8 @@ data/gtfs/
 !results/figures/*.gif
 !results/curves/
 !results/curves/*.csv
+!results/report_figures/
+!results/report_figures/*.png
 # runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe
 !results/station_access_compact.json
 # retired code and inputs stay on disk under attic/ but are not part of the submission

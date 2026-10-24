@@ -56,13 +56,15 @@ attempting the junction. Rows: `results/pair_block_ppo.csv`, `results/v2_*.csv`.
 ```
 notebooks/
   train_schedule_optimisation.ipynb   the deliverable (50 cells, both scenarios)
+report/
+  RailTech-A3-Report.docx / .pdf      the written report, rebuilt by scripts/build_report.py
 data/levels/                          prebuilt Flatland envs (fixed inputs)
 data/schedules/                       timetables extracted from GTFS
 scripts/                              environment/regime/reward/training modules the notebook imports
 results/                              the evidence behind the reported tables
 ```
 
-Eighteen scripts ship. The notebook imports five of them directly (`regimes`,
+Twenty scripts ship (eighteen analysis modules plus the report builders). The notebook imports five of them directly (`regimes`,
 `metric_rewards`, `priority_obs`, `train_ppo`, `s2_env`) and those pull in the rest:
 `regimes` owns the map geometry and installs one of three disruption variants
 (`disruptions.py` holds both the train-borne failures and the exogenous blockage);
@@ -147,9 +149,11 @@ python scripts/render_policy_gif.py --markers block --model runs/xb_b/best_model
     --scenario network-simple-compact --seed 3001 --incidents 2 \
     --stride 1 --width 4200 --out results/figures/corridor_ppo_block.gif
 
-# A2C / DQN and the collapse diagnostic
-python scripts/train_algo.py --algo a2c --out runs/a2c_v2
+# A2C / DQN under the same regime, then the figures and the report
+RL_A3_REGIME=block python scripts/train_algo.py --algo a2c --incidents 2 --out runs/a2c_block
+RL_A3_REGIME=block python scripts/train_algo.py --algo dqn --incidents 2 --gamma 0.999 --out runs/dqn_block
 python scripts/diag_action_collapse.py
+python scripts/make_report_figures.py && python scripts/build_report.py
 ```
 
 `scripts/nb_harness.py` executes the notebook's cells directly, so training and
