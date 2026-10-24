@@ -1,3 +1,0 @@
-condition,policy,seed,score,delay_all,completion,mean_return,total_delay,mean_delay,on_time,stops_served,episode_steps
-normal,greedy,0,0.0,-126.0,1.0,0.0,-126.0,-1.0,1.0,nan,556
-normal,greedy,1,0.0,-126.0,1.0,0.0,-126.0,-1.0,1.0,nan,556

@@ -1,14 +1,46 @@
-# Every arm against its baseline (paired, 30 seeds 3000-3029, 220-step holds)
+# Every arm against its baseline
 
-> The corridor DQN row below is the **superseded gamma=0.99 arm** (it collapses to
-> completion 0.000). The reported corridor DQN result is in `v3_dqn_compact.csv`:
-> -0.0577 -> -0.0461, delta +0.0116, 24/30 wins, p = 0.0014.
+All rows are paired within seed. The baseline and the arm run on the same env, the
+same seed and the same disruptions; the delta is the mean per-seed difference.
 
-| env | arm | baseline | arm | delta | wins | p | completion (base -> arm) |
+## Current: corridor, block regime (exogenous blockages, 2 x 400 steps)
+
+30 held-out seeds 3000-3029, observation 1032-d, checkpoints selected on 9001-9004.
+
+| map | arm | baseline | arm | delta | wins | p | completion | crossings / ep |
+|---|---|---|---|---|---|---|---|---|
+| corridor | PPO | -0.0662 | -0.0005 | +0.0657 | 30/30 | < 1e-4 | 1.000 -> 1.000 | 40 (forward 0) |
+
+Evidence: `results/pair_block_ppo.csv`; curve `results/curves/ppo_corridor_block.csv`;
+figure `results/figures/corridor_{forward,ppo}_block.gif`; crossing audit
+(`scripts/crossing_audit.py decisions`): 101 blocked visits -> 81 turns, 202 open -> 0.
+Controls: clean network +0.0000 with 0 crossings; hand-written detour teacher -0.0005;
+sensitivity 30 x 22-step blockages +0.001 (3 seeds).
+
+## Legacy: corridor, band regime (retired, 1030-d observation)
+
+Superseded by the block-regime row above. The band regime fired train-borne failures
+inside the stretch between a stop's escape crossover and its platform, which measured
+0 avoidable incidents in 9 samples, and its band table cannot be compared with the
+current arms. Kept here as the record of what was re-run and why.
+
+| map | arm | baseline | arm | delta | wins | p | completion |
 |---|---|---|---|---|---|---|---|
-| corridor | A2C | -0.0583 | -0.0583 | -0.0000 | 0/30 (29 ties, 1 loss) | 1.0000 | 1.000 -> 1.000 |
-| corridor | DQN | -0.0577 | -0.2890 | -0.2312 | 0/30 | 0.0000 | 1.000 -> 0.000 |
 | corridor | PPO | -0.0583 | -0.0473 | +0.0109 | 23/30 | 0.0052 | 1.000 -> 1.000 |
-| junction | A2C | -0.1769 | -0.0251 | +0.1518 | 30/30 | 0.0000 | 1.000 -> 0.000 |
-| junction | DQN | -0.1769 | -0.0208 | +0.1561 | 30/30 | 0.0000 | 1.000 -> 0.183 |
-| junction | PPO | -0.1769 | -0.0251 | +0.1518 | 30/30 | 0.0000 | 1.000 -> 0.000 |
+| corridor | A2C | -0.0583 | -0.0583 | +0.0000 | 0/30 (29 ties) | 1.0000 | 1.000 -> 1.000 |
+| corridor | DQN (gamma 0.999) | -0.0583 | -0.0473 | +0.0109 | 23/30 | 0.0052 | 1.000 -> 1.000 |
+
+## Junction: train-borne regime (3 x 220 steps)
+
+30 held-out seeds, baseline is the scripted route follower, observation 1030-d (these
+checkpoints predate the two features added for the corridor and no longer load).
+
+| map | arm | baseline | arm | delta | wins | p | completion (base -> arm) |
+|---|---|---|---|---|---|---|---|
+| junction | PPO | -0.1769 | -0.0251 | +0.1518 | 30/30 | < 1e-4 | 1.000 -> 0.000 |
+| junction | A2C | -0.1769 | -0.0251 | +0.1518 | 30/30 | < 1e-4 | 1.000 -> 0.000 |
+| junction | DQN | -0.1769 | -0.0208 | +0.1561 | 30/30 | < 1e-4 | 1.000 -> 0.183 |
+
+Every learned arm "wins" by parking the fleet: the metric charges a cancellation less
+than a dispatch into a jam, so this is a metric pathology, not a better policy.
+Evidence: `results/v2_ppo_s2.csv`, `results/v2_a2c_s2.csv`, `results/v2_dqn_s2.csv`.

@@ -4,7 +4,6 @@
 flatland-rl==4.3.0
 gymnasium==1.4.0
 stable-baselines3==2.9.0
-sb3-contrib==2.9.0
 torch==2.14.1
 numpy==1.26.4
 pandas==2.3.3

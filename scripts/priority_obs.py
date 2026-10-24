@@ -23,6 +23,15 @@ from the env's own state and distance map:
     route_len          my remaining route length                                 /100
     queue_ahead        number of STALLED trains (stopped or malfunctioning) on my
                        route ahead of me, i.e. the queue I am about to join       /6
+    dist_blocked_ahead distance to the nearest impassable cell on my own row,
+                       ahead in my heading (1.0 = nothing blocked)               /50
+    dist_commit_ahead  distance to the next commit crossover on my row ahead,
+                       i.e. how far I still have to change track (1.0 = none)    /50
+
+The last two make the crossing decision expressible: "the track ahead is
+blocked *and* I can still reach a crossover before it". `dist_blocked_ahead`
+reads the exogenous blockage registry (`blockage.active_cells`), because a
+zeroed rail cell is invisible to the occupancy-based features above.
 
 Everything is clipped to roughly [-1, 1] so it can share the MLP input with the
 already-normalised tree.
@@ -32,7 +41,9 @@ from __future__ import annotations
 
 import numpy as np
 
-N_PRIORITY = 10
+from regimes import next_commit_ahead
+
+N_PRIORITY = 12
 HORIZON = 50  # cells of route inspected
 
 
@@ -81,6 +92,7 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
         def _compute_priority(env, horizon):
             from flatland.envs.step_utils.states import TrainState
 
+            blocked_cells = set(getattr(env, "_blocked_cells", ()) or ())
             try:
                 paths = env.distance_map.get_shortest_paths()
             except Exception:
@@ -131,6 +143,7 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
                 if on_map[handle]:
                     configuration = agent.current_configuration
                     position = (int(configuration[0][0]), int(configuration[0][1]))
+                    row = position[0]
                     heading = int(configuration[1])
                     route = _route_ahead(paths.get(handle) or [], position, horizon)
                     features[8] = np.clip(len(route) / 100.0, 0.0, 1.0)
@@ -155,6 +168,23 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
                     features[4] = np.clip(blocked / 5.0, 0.0, 1.0)
                     features[6] = float(agent.speed_counter.speed)
                     features[9] = min(queue_ahead / 6.0, 1.0)
+                    # exogenous blockage / remaining chance to change track
+                    step = 1 if heading == 1 else -1 if heading == 3 else 0
+                    distance_blocked = horizon
+                    if step and blocked_cells:
+                        for offset in range(1, horizon + 1):
+                            column = position[1] + step * offset
+                            if column < 0:
+                                break
+                            if (row, column) in blocked_cells:
+                                distance_blocked = offset
+                                break
+                    features[10] = np.clip(distance_blocked / horizon, 0.0, 1.0)
+                    commit = (next_commit_ahead(row, position[1], heading, horizon)
+                              if step else None)
+                    features[11] = np.clip(
+                        (commit if commit is not None else horizon) / horizon, 0.0, 1.0
+                    )
                 block[handle] = features
             return block
 

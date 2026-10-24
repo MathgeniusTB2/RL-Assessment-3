@@ -21,53 +21,74 @@ disruption regime:
 
 | Scenario | Level | Services | Result |
 |---|---|---|---|
-| `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.011** (30 held-out seeds, 23/30) |
+| `network-simple-compact` | 87x8, four adjacent through tracks | 52 | **PPO beats the forward-only baseline by +0.066** (30 held-out seeds, 30/30) by changing track at a crossover to dodge a blocked one |
 | `granville-harris-park` | 20x20 Y-link junction | 126 movements | learned policy fails; diagnosed under **The junction** |
 
 - **Algorithms:** PPO (two copies of the fleet, 104 per-agent `Discrete(5)` slots), A2C and DQN (one copy, 52 slots).
 - **Reward:** the assessment metric itself, paid densely as a potential,
   `r_t = R(t) - R(t-1)`, which reproduces `DefaultRewards` exactly.
-- **Disruptions:** three fixed 220-step failures per episode, placed in the band
-  between a stop's escape crossover and its platform, direction-balanced.
+- **Disruptions:** on the corridor, two **exogenous** 400-step track blockages per
+  episode (a cell's rail transitions are removed, so the failure exists whether or
+  not a train goes near it), one per direction, drawn from the cells just past each
+  commit crossover. On the junction, three train-borne 220-step failures inside the
+  running line. Both are deterministic functions of the episode seed.
 
 ## Results
 
 Corridor, 30 held-out seeds (3000-3029), checkpoints selected on unseen seeds:
 
-| arm | baseline | arm | delta | wins | p | completion |
-|---|---|---|---|---|---|---|
-| **PPO** | -0.0583 | **-0.0473** | **+0.0109** | 23/30 | 0.0052 | 1.000 -> 1.000 |
-| A2C | -0.0583 | -0.0583 | +0.0000 | 0/30 (29 ties) | 1.0000 | 1.000 -> 1.000 |
-| DQN | -0.0577 | -0.0461 | +0.0116 | 24/30 | 0.0014 | 1.000 -> 1.000 |
+| arm | baseline | arm | delta | wins | p | completion | crossings / episode |
+|---|---|---|---|---|---|---|---|
+| **PPO** (block regime, 2 x 400 steps) | -0.0662 | **-0.0005** | **+0.0657** | 30/30 | < 1e-4 | 1.000 -> 1.000 | 40 (forward-only: 0) |
 
-The corridor comparison is punctuality at equal completion: all three arms and the
-baseline finish every train on all 30 seeds; PPO beats it by +0.0109 (23/30) and DQN by +0.0116 (24/30); the DQN row was re-run after the placement fix, so its baseline reads -0.0577. Junction: the baseline completes 126/126 at
--0.1769, while every learned arm scores about +0.15 better by parking the fleet -
-the metric prefers cancelling to attempting the junction. Rows: `results/v2_*.csv`, plus `results/v3_dqn_compact.csv` for the corridor DQN row.
+The corridor comparison is punctuality at equal completion, and the mechanism is
+rerouting rather than a threshold artefact: both arms face **identical** blockages
+(same cells, same steps), the policy sits at the hand-written detour teacher's own
+score, and the crossings are conditional - of 101 agent-steps on a commit crossover
+with a blocked cell ahead, 81 turned; of 202 with the track open, **0** did. On a
+clean network the same checkpoint scores exactly +0.0000 with 0 crossings.
+Junction: the baseline completes 126/126 at -0.1769, while every learned arm scores
+about +0.15 better by parking the fleet - the metric prefers cancelling to
+attempting the junction. Rows: `results/pair_block_ppo.csv`, `results/v2_*.csv`.
 
 ## Repository layout
 
 ```
 notebooks/
-  train_schedule_optimisation.ipynb   the deliverable (50 cells)
-  Scenario2/Scenario2.ipynb           Scenario 2 assembly, executed by scripts/s2_env.py
+  train_schedule_optimisation.ipynb   the deliverable (50 cells, both scenarios)
 data/levels/                          prebuilt Flatland envs (fixed inputs)
 data/schedules/                       timetables extracted from GTFS
 scripts/                              environment/regime/reward/training modules the notebook imports
 results/                              the evidence behind the reported tables
 ```
 
-Sixteen modules ship in `scripts/` (the notebook imports most of them at run time) (`regimes`, `disruptions`, `metric_rewards`, `train_ppo` and its dependencies, `s2_env`); `train_algo`,
-`eval_pair` and `diag_action_collapse` reproduce the reported runs from the command
-line, and `verify_rewards` re-checks the dense reward against the metric. The
-notebook, not the scripts, is the graded artifact.
+Eighteen scripts ship. The notebook imports five of them directly (`regimes`,
+`metric_rewards`, `priority_obs`, `train_ppo`, `s2_env`) and those pull in the rest:
+`regimes` owns the map geometry and installs one of three disruption variants
+(`disruptions.py` holds both the train-borne failures and the exogenous blockage);
+`s2_env` loads its assembly from `s2_assembly.py`. The command-line entry points are
+`train_ppo`, `train_algo`, `eval_pair`, `bc_warmstart` (teacher labels and the
+behaviour-cloned warm start), `crossing_audit` (score, per-crossover decisions,
+regime exposure), `render_policy_gif`, `verify_rewards`, `diag_action_collapse` and
+`nb_harness` (which executes the notebook's cells so the CLIs run the notebook's
+code). Both scenarios run from this one notebook: the junction fleet is assembled by
+`scripts/s2_env.py`, so there is no second notebook. The notebook, not the scripts,
+is the graded artefact.
+
+Everything that is no longer on a live path (the retired Scenario2 notebook, the
+abandoned arms, the older reconstruction scripts) is in `attic/`, unscheduled and
+not imported by anything.
 
 Not shipped: the GTFS feed (~1.4 GB) and the model checkpoints (~9 MB each,
-~35 min to retrain). Four policy rollouts under `results/figures/` are shipped
-(the notebook displays them) and `scripts/render_policy_gif.py` regenerates that
-view. The report's disruption stills were rendered with a delay-rendering script
-that is not in the repository, and the pre-rework `scenario1_greedy_*.gif` renders
-are not shipped either.
+~1 h to rebuild from scratch including the behaviour-cloning pass). The policy GIFs
+under `results/figures/` are shipped (the notebook references them); every other
+rendered figure is regenerated by `scripts/render_policy_gif.py --markers block`.
+
+One caveat about the junction rows: they were measured before the observation grew
+from 1030 to 1032 dimensions (the two blockage/geometry features), so the junction
+checkpoints no longer load into the current code. The junction numbers are reported
+as measured; reproducing them needs a junction retrain, which is not part of the
+shipped run set.
 
 ## Setup
 
@@ -99,29 +120,35 @@ python scripts/verify_rewards.py --policy forward --seed 2000
 ## Reproducing the reported runs
 
 ```bash
-# corridor: 3 M-step PPO, ~35 min on 16 CPU cores
+# 1. behaviour-clone the detour teacher on the block regime (labels + warm start)
+python scripts/bc_warmstart.py collect --episodes 20 --out runs/bc_block/data.npz
+python scripts/bc_warmstart.py train --data runs/bc_block/data.npz \
+    --out runs/bc_block/bc3.zip --epochs 8 --turn-weight 20
+
+# 2. PPO from that checkpoint with the critic warmed up first (~40 min)
 python scripts/train_ppo.py --scenario network-simple-compact --disruption few_long \
-    --incidents 3 --reward metric --shaping --priority --observation-radius 50 \
-    --arrival-bonus 50 --stuck-penalty 1 --timesteps 3000000 \
-    --eval-every 250000 --out runs/v2_ppo_compact
+    --incidents 2 --shaping --priority --observation-radius 50 \
+    --arrival-bonus 50 --stuck-penalty 1 --timesteps 1200000 --lr 0.0001 \
+    --freeze-policy-steps 200000 --eval-every 100000 \
+    --pretrain runs/bc_block/bc3.zip --out runs/xb_b
 
-# the paired test on held-out seeds
-python scripts/eval_pair.py --scenario network-simple-compact --baseline forward \
-    --disruption few_long --incidents 3 --priority --observation-radius 50 \
-    --model runs/v2_ppo_compact/best_model.zip \
-    --seeds "$(seq -s, 3000 3029)" --out results/v2_ppo_compact.csv
+# 3. the paired test on held-out seeds (identical blockages for both arms)
+RL_A3_REGIME=block python scripts/eval_pair.py --scenario network-simple-compact \
+    --baseline forward --disruption few_long --incidents 2 --priority \
+    --observation-radius 50 --model runs/xb_b/best_model.zip \
+    --seeds "$(seq -s, 3000 3029)" --out results/pair_block_ppo.csv
 
-# the junction arms (2 x 126 slots, so one rollout is 512*126*2 = 129 024 steps)
-python scripts/train_ppo.py --scenario granville-harris-park --disruption few_long \
-    --incidents 3 --reward metric --shaping --priority --observation-radius 50 \
-    --arrival-bonus 50 --stuck-penalty 1 --timesteps 2000000 \
-    --eval-every 200000 --out runs/v2_ppo_s2
-python scripts/train_algo.py --scenario granville-harris-park --algo a2c \
-    --lr 7e-4 --n-steps 5 --gamma 0.99 --out runs/v2_a2c_s2
+# 4. the crossing audit and the figures
+RL_A3_REGIME=block python scripts/crossing_audit.py decisions \
+    --model runs/xb_b/best_model.zip --seeds 3000,3001 --incidents 2
+RL_A3_REGIME=block python scripts/crossing_audit.py score \
+    --model runs/xb_b/best_model.zip --seeds 3000,3001,3002 --incidents 2
+python scripts/render_policy_gif.py --markers block --model runs/xb_b/best_model.zip \
+    --scenario network-simple-compact --seed 3001 --incidents 2 \
+    --stride 1 --width 4200 --out results/figures/corridor_ppo_block.gif
 
-# A2C and DQN (the reported rows need these explicit settings)
-python scripts/train_algo.py --algo a2c --lr 7e-4 --n-steps 5 --gamma 0.99 --out runs/v2_a2c_compact
-python scripts/train_algo.py --algo dqn --dqn-lr 1e-4 --gamma 0.999 --out runs/v3_dqn_compact
+# A2C / DQN and the collapse diagnostic
+python scripts/train_algo.py --algo a2c --out runs/a2c_v2
 python scripts/diag_action_collapse.py
 ```
 

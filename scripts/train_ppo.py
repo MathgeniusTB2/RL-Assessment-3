@@ -35,11 +35,8 @@ os.environ.setdefault("MKL_NUM_THREADS", "4")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import hinted_obs  # noqa: E402
 import disruptions  # noqa: E402
 import regimes  # noqa: E402
-import masking  # noqa: E402
-import progress_rewards  # noqa: E402
 import priority_obs  # noqa: E402
 import nb_harness  # noqa: E402
 from metric_rewards import PotentialRewards, ShapedMetricRewards  # noqa: E402
@@ -48,24 +45,6 @@ INTERNAL_EVAL_SEEDS = [9001, 9002, 9003, 9004]  # never used for reporting
 
 
 # --------------------------------------------------------------------- reward
-def install_progress_reward(parallel_env, progress=0.01, deadlock=-5.0, arrival=10.0):
-    """Competition recipe: dense distance progress + deadlock + completion."""
-    raw = parallel_env._wrap
-    rewards = progress_rewards.ProgressRewards(
-        progress=progress, deadlock=deadlock, arrival=arrival
-    )
-    raw.rewards = rewards
-    original = raw.reset
-
-    def reset(*args, **kwargs):
-        out = original(*args, **kwargs)
-        rewards.reset()
-        return out
-
-    raw.reset = reset
-    return rewards
-
-
 def install_dense_reward(parallel_env, shaped=False, arrival_bonus=50.0, stuck_penalty=1.0):
     """Replace the env's reward object with the metric potential (train only)."""
     raw = parallel_env._wrap
@@ -128,9 +107,7 @@ def make_scale_wrapper(scale: float):
 
 def build_train_env(nb, copies: int, scale: float, reward: bool, shaped: bool = False,
                     disruption: str = "poisson", incidents: int = 1,
-                    arrival_bonus: float = 50.0, stuck_penalty: float = 1.0,
-                    reward_kind: str = "metric", progress: float = 0.01,
-                    deadlock: float = -5.0, arrival: float = 10.0, **overrides):
+                    arrival_bonus: float = 50.0, stuck_penalty: float = 1.0, **overrides):
     import supersuit as ss
 
     condition = "delayed" if disruption == "poisson" else "normal"
@@ -140,12 +117,9 @@ def build_train_env(nb, copies: int, scale: float, reward: bool, shaped: bool = 
     if disruption == "few_long":
         regimes.install(parallel._wrap, nb["SCENARIO"], incidents)
     if reward:
-        if reward_kind == "progress":
-            install_progress_reward(parallel, progress=progress, deadlock=deadlock, arrival=arrival)
-        else:
-            install_dense_reward(
-                parallel, shaped=shaped, arrival_bonus=arrival_bonus, stuck_penalty=stuck_penalty
-            )
+        install_dense_reward(
+            parallel, shaped=shaped, arrival_bonus=arrival_bonus, stuck_penalty=stuck_penalty
+        )
     install_random_episodes(parallel)
     vec = ss.pettingzoo_env_to_vec_env_v1(parallel)
     vec = ss.concat_vec_envs_v1(vec, copies, num_cpus=0, base_class="stable_baselines3")
@@ -255,21 +229,18 @@ def main() -> int:
     ap.add_argument("--torch-threads", type=int, default=4)
     ap.add_argument("--malfunction-rate", type=float, default=None,
                     help="training-only disruption curriculum (eval stays at the standard rate)")
-    ap.add_argument("--hint", action="store_true", help="append greedy advice to the obs")
-    ap.add_argument("--priority", action="store_true", help="append priority/conflict features")
-    ap.add_argument("--mask", action="store_true", help="mask illegal actions (MaskablePPO)")
+    ap.add_argument("--priority", action="store_true", help="append priority/geometry features")
     ap.add_argument("--disruption", default="poisson", choices=["poisson", "few_long"],
                     help="poisson = built-in stress rate; few_long = deterministic long failures")
-    ap.add_argument("--incidents", type=int, default=3)
-    ap.add_argument("--reward", default="metric", choices=["metric", "progress"],
-                    help="training objective: the metric potential, or the competition progress reward")
-    ap.add_argument("--progress-weight", type=float, default=0.01)
-    ap.add_argument("--deadlock-penalty", type=float, default=-5.0)
-    ap.add_argument("--arrival-reward", type=float, default=10.0)
+    ap.add_argument("--incidents", type=int, default=1)
     ap.add_argument("--shaping", action="store_true", help="+arrival bonus, -stuck penalty")
     ap.add_argument("--arrival-bonus", type=float, default=50.0)
     ap.add_argument("--stuck-penalty", type=float, default=1.0)
     ap.add_argument("--pretrain", default=None, help="BC checkpoint to warm-start from")
+    ap.add_argument("--freeze-policy-steps", type=int, default=0,
+                    help="keep the action net frozen for this many steps so the value net "
+                         "can converge first (a random critic otherwise destroys a "
+                         "behaviour-cloned policy in the first update)")
     ap.add_argument("--out", default="runs/s1_dense")
     ap.add_argument("--max-depth", type=int, default=None)
     ap.add_argument("--predictor-depth", type=int, default=None)
@@ -278,7 +249,6 @@ def main() -> int:
 
     from stable_baselines3 import PPO
     from stable_baselines3.common.callbacks import BaseCallback
-    from sb3_contrib import MaskablePPO
 
     import torch
 
@@ -300,8 +270,6 @@ def main() -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    if args.hint:
-        hinted_obs.install_hint_builder(nb)
     if args.priority:
         priority_obs.install_priority_features(nb)
 
@@ -319,10 +287,7 @@ def main() -> int:
     env = build_train_env(
         nb, args.copies, args.scale, reward=True,
         shaped=args.shaping, arrival_bonus=args.arrival_bonus, stuck_penalty=args.stuck_penalty,
-        reward_kind=args.reward, disruption=args.disruption, incidents=args.incidents,
-        progress=args.progress_weight,
-        deadlock=args.deadlock_penalty, arrival=args.arrival_reward,
-        **overrides,
+        disruption=args.disruption, incidents=args.incidents, **overrides,
     )
     evaluator = MetricEvaluator(
         nb, seeds=INTERNAL_EVAL_SEEDS[: args.eval_seeds],
@@ -346,10 +311,9 @@ def main() -> int:
         "seed": args.seed,
         "reward": "potential(DefaultRewards)",
         "pretrain": args.pretrain,
-        "hint": args.hint,
+        "freeze_policy_steps": args.freeze_policy_steps,
         "priority": args.priority,
-        "mask": args.mask,
-        "train_reward": args.reward,
+        "train_reward": "metric(potential)",
         "disruption": args.disruption,
         "incidents": args.incidents,
         "shaping": args.shaping,
@@ -367,10 +331,7 @@ def main() -> int:
     def lr_schedule(progress):
         return args.lr * (1.0 - progress) + 1e-5 * progress
 
-    algo_cls = MaskablePPO if args.mask else PPO
-    if args.mask:
-        env = masking.make_masked(env)
-    model = algo_cls(
+    model = PPO(
         "MlpPolicy",
         env,
         learning_rate=lr_schedule,
@@ -390,9 +351,17 @@ def main() -> int:
     )
 
     if args.pretrain:
-        donor = algo_cls.load(args.pretrain, device="cpu")
+        donor = PPO.load(args.pretrain, device="cpu")
         model.policy.load_state_dict(donor.policy.state_dict())
         print(f"warm start from {args.pretrain}")
+
+    frozen_params = []
+    if args.freeze_policy_steps:
+        for module in (model.policy.mlp_extractor.policy_net, model.policy.action_net):
+            for param in module.parameters():
+                param.requires_grad_(False)
+                frozen_params.append(param)
+        print(f"policy frozen for {args.freeze_policy_steps} steps (critic warm-up)")
 
     csv_path = out / "eval.csv"
     state = {"best": -np.inf, "best_key": (-1.0, -np.inf), "next_eval": args.eval_every,
@@ -406,6 +375,11 @@ def main() -> int:
 
         class EvalCallback(BaseCallback):
             def _on_step(self) -> bool:
+                if frozen_params and self.num_timesteps >= args.freeze_policy_steps:
+                    for param in frozen_params:
+                        param.requires_grad_(True)
+                    frozen_params.clear()
+                    print(f"policy unfrozen at {self.num_timesteps} steps", flush=True)
                 return True
 
             def _on_rollout_end(self) -> None:

@@ -1,0 +1,52 @@
+{
+  "note": "row = track class, col = station, derived from level geometry + timetable track codes",
+  "level_height": 8,
+  "level_width": 87,
+  "columns": {
+    "Strathfield": 1,
+    "Burwood": 14,
+    "Redfern": 40,
+    "Central": 84
+  },
+  "rows": {
+    "up_suburban": 2,
+    "up_local": 4,
+    "down_suburban": 3,
+    "down_local": 5
+  },
+  "bay": null,
+  "real_platform": {
+    "Strathfield": {
+      "up_suburban": 4,
+      "down_suburban": 6,
+      "up_local": 7,
+      "down_local": 8
+    },
+    "Burwood": {
+      "up_suburban": 3,
+      "down_suburban": null,
+      "up_local": 5,
+      "down_local": 6
+    },
+    "Redfern": {
+      "up_suburban": 3,
+      "down_suburban": 4,
+      "up_local": 5,
+      "down_local": 6
+    },
+    "Central": {
+      "up_suburban": 16,
+      "down_suburban": 18,
+      "up_local": 17,
+      "down_local": 19
+    }
+  },
+  "dropped_tracks": [
+    "up_main",
+    "down_main"
+  ],
+  "directions": {
+    "up": "EAST",
+    "down": "WEST"
+  }
+}

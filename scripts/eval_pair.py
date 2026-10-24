@@ -23,7 +23,6 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import disruptions  # noqa: E402
-import hinted_obs  # noqa: E402
 import priority_obs  # noqa: E402
 import nb_harness  # noqa: E402
 
@@ -141,19 +140,16 @@ def main() -> int:
     ap.add_argument("--seeds", default="8", help="integer count (fresh entropy seeds) or comma list")
     ap.add_argument("--out", default="results/pair.csv")
     ap.add_argument("--disruption", default="poisson", choices=["poisson", "few_long"])
-    ap.add_argument("--incidents", type=int, default=3)
+    ap.add_argument("--incidents", type=int, default=1)
     ap.add_argument("--baseline", default="notebook",
                     choices=["forward", "notebook"],
                     help="which greedy baseline to compare against")
-    ap.add_argument("--hint", action="store_true")
     ap.add_argument("--priority", action="store_true")
     ap.add_argument("--observation-radius", type=int, default=None)
     args = ap.parse_args()
 
     scenario2 = args.scenario == "granville-harris-park"
     nb = nb_harness.load(scenario2=scenario2)
-    if args.hint:
-        hinted_obs.install_hint_builder(nb)
     if args.priority:
         priority_obs.install_priority_features(nb)
     if args.observation_radius is not None:
@@ -173,8 +169,6 @@ def main() -> int:
         seeds = [int(s) for s in args.seeds.split(",")]
     else:
         n = int(args.seeds)
-        if n < 1:
-            raise SystemExit("--seeds takes a count >= 1 or a comma-separated list, e.g. 3000,3001")
         seeds = [secrets.randbits(31) for _ in range(n)]
     print(f"scenario={scenario} seeds={seeds}")
 

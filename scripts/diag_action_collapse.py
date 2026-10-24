@@ -22,10 +22,14 @@ def main() -> int:
     import argparse
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--a2c", default="runs/v2_a2c_compact/best_model.zip")
-    ap.add_argument("--dqn", default="runs/v3_dqn_compact/best_model.zip")
-    ap.add_argument("--ppo", default="runs/v2_ppo_compact/best_model.zip")
+    ap.add_argument("--a2c", default=None, help="optional A2C checkpoint to audit")
+    ap.add_argument("--dqn", default=None, help="optional DQN checkpoint to audit")
+    ap.add_argument("--ppo", default="runs/xb_b/best_model.zip",
+                    help="the shipped corridor PPO checkpoint")
     ap.add_argument("--scenario", default="network-simple-compact")
+    ap.add_argument("--incidents", type=int, default=2)
+    ap.add_argument("--variant", default="block",
+                    help="regime variant: block (reported), crossing, band or none")
     ap.add_argument("--seed", type=int, default=9001)
     args = ap.parse_args()
 
@@ -52,7 +56,8 @@ def main() -> int:
         p = nb["make_parallel_env"](scenario=args.scenario,
                                     condition="normal", seed=seed)
         raw = p._wrap
-        regimes.install(raw, args.scenario, 3)
+        if args.variant not in (None, "", "none"):
+            regimes.install(raw, args.scenario, args.incidents, variant=args.variant)
         obs, _ = p.reset(seed=seed)
         handles = list(p.possible_agents)
         hist = collections.Counter()
@@ -85,7 +90,8 @@ def main() -> int:
         "forward-only": lambda o, hs: {h: 2 for h in hs},
         "random": lambda o, hs: {h: int(rng.integers(0, 5)) for h in hs},
     }
-    for name, path in (("a2c", args.a2c), ("dqn", args.dqn), ("ppo", args.ppo)):
+    for name, path in ((n, p) for n, p in (("a2c", args.a2c), ("dqn", args.dqn),
+                                           ("ppo", args.ppo)) if p):
         p = Path(path)
         if not p.exists():
             print(f"{name.upper():<13} skipped: {path} not found")

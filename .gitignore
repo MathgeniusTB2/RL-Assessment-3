@@ -37,16 +37,21 @@ data/gtfs/
 # --- Committed artifacts (exceptions to the patterns above) ---
 !data/levels/*.pkl
 !data/levels/*.mpk
-!results/v[23]_*.csv
+# the evidence behind the reported tables: the corridor paired test, the three junction
+# arms, the shipped curve and the figures the notebook references
+!results/all_arms.md
+!results/pair_block_ppo.csv
+!results/v2_ppo_s2.csv
+!results/v2_a2c_s2.csv
+!results/v2_dqn_s2.csv
 !results/figures/
-!results/figures/policy_*.gif
+!results/figures/*.gif
 !results/curves/
 !results/curves/*.csv
 # runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe
 !results/station_access_compact.json
-!results/all_arms.md
-!results/normal_forward_s2.csv
-!results/normal_notebook_s2.csv
+# retired code and inputs stay on disk under attic/ but are not part of the submission
+attic/
 
 # Tooling caches
 .firecrawl/

@@ -27,31 +27,34 @@ from typing import Any, Dict
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# provenance of scripts/s2_assembly.py: the Scenario2 notebook cells it was
+# extracted from (6 imports / 8,9,10 layout+timetable constants / 12 effects /
+# 13 loader / 14 shortest running time / 15 create_agents / 16 create_timetable /
+# 19 scripted rollout / 18 setup_environment / 20 print_results)
 S2_CELLS = (6, 8, 9, 10, 12, 13, 14, 15, 16, 19, 18, 20)
-# 6 imports / 8,9,10 layout+timetable constants / 12 effects / 13 loader /
-# 14 shortest running time / 15 create_agents / 16 create_timetable /
-# 19 scripted rollout / 18 setup_environment (needs 19 for reference_arrivals)
-# 20 print_results
 
 
 def _load_notebook(namespace: Dict[str, Any]) -> Dict[str, Any]:
+    """Load the S2 assembly module into a registered namespace.
+
+    The assembly lives in ``scripts/s2_assembly.py`` (extracted verbatim from the
+    old Scenario2 notebook), so the deliverable notebook needs no second
+    notebook. It is exec'd into a real, registered module because supersuit
+    cloudpickles the env when it copies it, and classes defined in an ad-hoc
+    namespace fail the "lookup by module + qualname" step.
+    """
     import sys
     import types
 
     os.chdir(ROOT)
-    path = ROOT / "notebooks" / "Scenario2" / "Scenario2.ipynb"
-    cells = json.loads(path.read_text())["cells"]
-    # exec into a real, registered module: supersuit cloudpickles the env when it
-    # copies it, and dynamic classes defined in an ad-hoc namespace fail the
-    # "lookup by module + qualname" step otherwise
+    path = ROOT / "scripts" / "s2_assembly.py"
     module = types.ModuleType("a3_scenario2_ns")
     module.__file__ = str(path)
     module.__dict__.update(namespace)
     sys.modules[module.__name__] = module
-    for i in S2_CELLS:
-        exec(compile("".join(cells[i]["source"]), f"{path.name}[cell {i}]", "exec"), module.__dict__)
+    exec(compile(path.read_text(), path.name, "exec"), module.__dict__)
     # the module dict IS the namespace, so later patches (obs builder, greedy)
-    # are what the notebook's own functions resolve at call time
+    # are what the assembly's own functions resolve at call time
     return module.__dict__
 
 
