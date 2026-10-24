@@ -88,7 +88,7 @@ def is_s2(scenario: str) -> bool:
     return scenario in ("granville-harris-park", "granville_harris_park", "s2", "scenario2")
 
 
-def install(env, scenario: str, incidents: int = 2):
+def install(env, scenario: str, incidents: int = 3):
     """Install the scenario's disruption regime on a raw RailEnv."""
     if is_compact(scenario):
         # a band of avoidable cells between each escape crossover and its

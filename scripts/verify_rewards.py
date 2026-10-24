@@ -9,7 +9,7 @@ potential installed exactly as ``train_ppo`` installs it - and compares.
     python scripts/verify_rewards.py                 # forward-only, seed 2000
     python scripts/verify_rewards.py --policy greedy --seed 2001
     python scripts/verify_rewards.py --policy never          # cancellation-only rollout
-    python scripts/verify_rewards.py --scenario granville-harris-park --policy notebook
+    python scripts/verify_rewards.py --scenario granville-harris-park --policy forward
 
 Exit code 0 means every per-agent total and every per-term total agrees to
 ``--tol`` (default 1e-9); exit code 1 prints the offenders.

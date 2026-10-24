@@ -44,6 +44,7 @@ data/gtfs/
 !results/curves/*.csv
 # runtime input: scripts/regimes.py reads the corridor's escape crossovers from this probe
 !results/station_access_compact.json
+!results/all_arms.md
 
 # Tooling caches
 .firecrawl/

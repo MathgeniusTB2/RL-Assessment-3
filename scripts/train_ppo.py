@@ -260,7 +260,7 @@ def main() -> int:
     ap.add_argument("--mask", action="store_true", help="mask illegal actions (MaskablePPO)")
     ap.add_argument("--disruption", default="poisson", choices=["poisson", "few_long"],
                     help="poisson = built-in stress rate; few_long = deterministic long failures")
-    ap.add_argument("--incidents", type=int, default=1)
+    ap.add_argument("--incidents", type=int, default=3)
     ap.add_argument("--reward", default="metric", choices=["metric", "progress"],
                     help="training objective: the metric potential, or the competition progress reward")
     ap.add_argument("--progress-weight", type=float, default=0.01)

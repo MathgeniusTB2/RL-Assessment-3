@@ -141,7 +141,7 @@ def main() -> int:
     ap.add_argument("--seeds", default="8", help="integer count (fresh entropy seeds) or comma list")
     ap.add_argument("--out", default="results/pair.csv")
     ap.add_argument("--disruption", default="poisson", choices=["poisson", "few_long"])
-    ap.add_argument("--incidents", type=int, default=1)
+    ap.add_argument("--incidents", type=int, default=3)
     ap.add_argument("--baseline", default="notebook",
                     choices=["forward", "notebook"],
                     help="which greedy baseline to compare against")
