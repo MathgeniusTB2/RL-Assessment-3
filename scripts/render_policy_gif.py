@@ -24,8 +24,10 @@ def main() -> int:
     ap.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"])
     ap.add_argument("--model", default=None,
                     help="checkpoint to render; omit with --policy forward for the baseline")
-    ap.add_argument("--policy", default=None, choices=["forward"],
-                    help="render the forward-only reflex instead of a checkpoint")
+    ap.add_argument("--policy", default=None, choices=["forward", "notebook"],
+                    help="baseline to render instead of a checkpoint: forward (the corridor "
+                         "reflex) or notebook (the distance-map route follower, used on the "
+                         "junction)")
     ap.add_argument("--scenario", default="network-simple-compact")
     ap.add_argument("--seed", type=int, default=3000)
     ap.add_argument("--incidents", type=int, default=3)
@@ -81,6 +83,13 @@ def main() -> int:
 
         def policy(raw):
             return {h: int(RailEnvActions.MOVE_FORWARD.value) for h in handles}
+    elif args.policy == "notebook":
+        model = None
+        greedy = nb["greedy_actions"]
+
+        def policy(raw):
+            plan = greedy(raw)
+            return {h: int(plan.get(h, 0)) for h in handles}
     else:
         if not args.model:
             raise SystemExit("--model is required unless --policy forward")

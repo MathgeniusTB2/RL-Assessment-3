@@ -107,7 +107,8 @@ def make_scale_wrapper(scale: float):
 
 def build_train_env(nb, copies: int, scale: float, reward: bool, shaped: bool = False,
                     disruption: str = "poisson", incidents: int = 1,
-                    arrival_bonus: float = 50.0, stuck_penalty: float = 1.0, **overrides):
+                    arrival_bonus: float = 50.0, stuck_penalty: float = 1.0,
+                    num_cpus: int = 0, **overrides):
     import supersuit as ss
 
     condition = "delayed" if disruption == "poisson" else "normal"
@@ -122,7 +123,10 @@ def build_train_env(nb, copies: int, scale: float, reward: bool, shaped: bool = 
         )
     install_random_episodes(parallel)
     vec = ss.pettingzoo_env_to_vec_env_v1(parallel)
-    vec = ss.concat_vec_envs_v1(vec, copies, num_cpus=0, base_class="stable_baselines3")
+    # num_cpus > 0 steps the envs in worker processes: the tree observation is the
+    # bottleneck (about 1.8 ms per agent-step), so this is the only large speed-up
+    vec = ss.concat_vec_envs_v1(vec, copies, num_cpus=num_cpus,
+                                base_class="stable_baselines3")
     vec.seed = lambda seed=None: [None] * vec.num_envs
     return make_scale_wrapper(scale)(vec)
 
@@ -227,6 +231,11 @@ def main() -> int:
     ap.add_argument("--eval-seeds", type=int, default=4)
     ap.add_argument("--n-epochs", type=int, default=4)
     ap.add_argument("--torch-threads", type=int, default=4)
+    ap.add_argument("--num-cpus", type=int, default=0,
+                    help="worker processes for env stepping (0 = all in-process); the tree "
+                         "observation dominates, so >0 is the main speed-up")
+    ap.add_argument("--device", default="cpu", choices=["cpu", "cuda"],
+                    help="torch device for the policy; the env stays on CPU either way")
     ap.add_argument("--malfunction-rate", type=float, default=None,
                     help="training-only disruption curriculum (eval stays at the standard rate)")
     ap.add_argument("--priority", action="store_true", help="append priority/geometry features")
@@ -253,6 +262,8 @@ def main() -> int:
     import torch
 
     torch.set_num_threads(args.torch_threads)
+    if args.device == "cuda" and not torch.cuda.is_available():
+        raise SystemExit("--device cuda requested but torch.cuda.is_available() is False")
 
     scenario2 = args.scenario == "granville-harris-park"
     nb = nb_harness.load(scenario2=scenario2)
@@ -287,7 +298,8 @@ def main() -> int:
     env = build_train_env(
         nb, args.copies, args.scale, reward=True,
         shaped=args.shaping, arrival_bonus=args.arrival_bonus, stuck_penalty=args.stuck_penalty,
-        disruption=args.disruption, incidents=args.incidents, **overrides,
+        disruption=args.disruption, incidents=args.incidents, num_cpus=args.num_cpus,
+        **overrides,
     )
     evaluator = MetricEvaluator(
         nb, seeds=INTERNAL_EVAL_SEEDS[: args.eval_seeds],
@@ -301,6 +313,8 @@ def main() -> int:
         "condition": "delayed" if args.disruption == "poisson" else "normal",
         "timesteps": args.timesteps,
         "copies": args.copies,
+        "num_cpus": args.num_cpus,
+        "device": args.device,
         "scale": args.scale,
         "n_steps": args.n_steps,
         "batch_size": args.batch_size,
@@ -347,11 +361,11 @@ def main() -> int:
         policy_kwargs=dict(net_arch=[256, 256]),
         verbose=1,
         seed=args.seed,
-        device="cpu",
+        device=args.device,
     )
 
     if args.pretrain:
-        donor = PPO.load(args.pretrain, device="cpu")
+        donor = PPO.load(args.pretrain, device=args.device)
         model.policy.load_state_dict(donor.policy.state_dict())
         print(f"warm start from {args.pretrain}")
 
