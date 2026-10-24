@@ -22,8 +22,17 @@ import nb_harness  # noqa: E402
 import priority_obs  # noqa: E402
 import regimes  # noqa: E402
 
-CKPT = pathlib.Path.home() / "backups/rl-a3-gpu-2026-10-23/runs"
-SEED = 3000
+import argparse
+
+_ap = argparse.ArgumentParser(description=__doc__)
+_ap.add_argument("--runs", default=str(pathlib.Path.home() / "backups/rl-a3-gpu-2026-10-23/runs"),
+                 help="directory holding <run>/best_model.zip (checkpoints are not shipped)")
+_ap.add_argument("--scenario", default="network-simple-compact")
+_ap.add_argument("--seed", type=int, default=3000)
+_ARGS = _ap.parse_args()
+
+CKPT = pathlib.Path(_ARGS.runs)
+SEED = _ARGS.seed
 
 nb = nb_harness.load()
 priority_obs.install_priority_features(nb)
@@ -37,11 +46,11 @@ def patched(self, *a, **kw):
 
 
 cls.__init__ = patched
-nb["SCENARIO"] = "network-simple-compact"
+nb["SCENARIO"] = _ARGS.scenario
 
-parallel = nb["make_parallel_env"](scenario="network-simple-compact", condition="normal")
+parallel = nb["make_parallel_env"](scenario=_ARGS.scenario, condition="normal")
 raw = parallel._wrap
-regimes.install(raw, "network-simple-compact", 3)
+regimes.install(raw, _ARGS.scenario, 3)
 handles = list(parallel.possible_agents)
 
 # --- how many crossovers does the level have? -----------------------------
@@ -61,6 +70,9 @@ def load(name):
     from stable_baselines3 import A2C, DQN, PPO
 
     path = CKPT / name / "best_model.zip"
+    if not path.exists():
+        print(f"  (skipping {name}: {path} not found - checkpoints are not shipped)")
+        return None
     algo = name.split("_")[1]
     return {"ppo": PPO, "a2c": A2C, "dqn": DQN}[algo].load(str(path), device="cpu")
 
@@ -123,6 +135,8 @@ for label, pol in (("forward-only", "forward"), ("greedy (map)", "greedy"),
                    ("PPO", load("v2_ppo_compact")),
                    ("A2C", load("v2_a2c_compact")),
                    ("DQN", load("v3_dqn_compact"))):
+    if pol is None:
+        continue
     r = run(pol)
     print(f"{label:<12} {r['steps']:>5} {r['lateral_req']:>11} {r['lateral_moves']:>13} "
           f"{r['cells']:>15}   {r['actions']}")

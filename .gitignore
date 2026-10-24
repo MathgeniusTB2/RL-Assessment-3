@@ -46,6 +46,7 @@ data/gtfs/
 !results/station_access_compact.json
 !results/all_arms.md
 !results/normal_forward_s2.csv
+!results/normal_notebook_s2.csv
 
 # Tooling caches
 .firecrawl/

@@ -57,7 +57,7 @@ scripts/                              environment/regime/reward/training modules
 results/                              the evidence behind the reported tables
 ```
 
-Thirteen modules are imported by the notebook at run time (`regimes`, `disruptions`, `metric_rewards`, `train_ppo` and its dependencies, `s2_env`); `train_algo`,
+Sixteen modules ship in `scripts/` (the notebook imports most of them at run time) (`regimes`, `disruptions`, `metric_rewards`, `train_ppo` and its dependencies, `s2_env`); `train_algo`,
 `eval_pair` and `diag_action_collapse` reproduce the reported runs from the command
 line, and `verify_rewards` re-checks the dense reward against the metric. The
 notebook, not the scripts, is the graded artifact.
