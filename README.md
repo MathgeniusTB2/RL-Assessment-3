@@ -111,6 +111,14 @@ python scripts/eval_pair.py --scenario network-simple-compact --baseline forward
     --model runs/v2_ppo_compact/best_model.zip \
     --seeds "$(seq -s, 3000 3029)" --out results/v2_ppo_compact.csv
 
+# the junction arms (2 x 126 slots, so one rollout is 512*126*2 = 129 024 steps)
+python scripts/train_ppo.py --scenario granville-harris-park --disruption few_long \
+    --incidents 3 --reward metric --shaping --priority --observation-radius 50 \
+    --arrival-bonus 50 --stuck-penalty 1 --timesteps 2000000 \
+    --eval-every 200000 --out runs/v2_ppo_s2
+python scripts/train_algo.py --scenario granville-harris-park --algo a2c \
+    --lr 7e-4 --n-steps 5 --gamma 0.99 --out runs/v2_a2c_s2
+
 # A2C and DQN (the reported rows need these explicit settings)
 python scripts/train_algo.py --algo a2c --lr 7e-4 --n-steps 5 --gamma 0.99 --out runs/v2_a2c_compact
 python scripts/train_algo.py --algo dqn --dqn-lr 1e-4 --gamma 0.999 --out runs/v3_dqn_compact
