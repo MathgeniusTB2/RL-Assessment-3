@@ -173,6 +173,8 @@ def main() -> int:
         seeds = [int(s) for s in args.seeds.split(",")]
     else:
         n = int(args.seeds)
+        if n < 1:
+            raise SystemExit("--seeds takes a count >= 1 or a comma-separated list, e.g. 3000,3001")
         seeds = [secrets.randbits(31) for _ in range(n)]
     print(f"scenario={scenario} seeds={seeds}")
 
