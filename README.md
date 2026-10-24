@@ -111,8 +111,9 @@ python scripts/eval_pair.py --scenario network-simple-compact --baseline forward
     --model runs/v2_ppo_compact/best_model.zip \
     --seeds "$(seq -s, 3000 3029)" --out results/v2_ppo_compact.csv
 
-# A2C / DQN and the collapse diagnostic
-python scripts/train_algo.py --algo a2c --out runs/a2c_v2
+# A2C and DQN (the reported rows need these explicit settings)
+python scripts/train_algo.py --algo a2c --lr 7e-4 --n-steps 5 --gamma 0.99 --out runs/v2_a2c_compact
+python scripts/train_algo.py --algo dqn --dqn-lr 1e-4 --gamma 0.999 --out runs/v3_dqn_compact
 python scripts/diag_action_collapse.py
 ```
 
