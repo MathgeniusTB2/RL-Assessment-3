@@ -55,7 +55,7 @@ def workflow() -> None:
                                                 "shared policy parameters"),
         (0.185, 0.115, "Training and checkpoint selection", "PPO warm start (BC + critic warm-up)\n"
                                                            "A2C, DQN per agent\n"
-                                                           "best of 4 unseen seeds by (completion, score)"),
+                                                           "best of 2-4 unseen seeds by (completion, score)"),
         (0.055, 0.105, "Paired evaluation and reporting", "seeds 3000-3029 vs baseline, exact sign test\n"
                                                           "score, delay_all, completion, crossings"),
     ]

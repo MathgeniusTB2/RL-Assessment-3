@@ -173,8 +173,8 @@ body(
     "that regime, and across all three algorithms, only the warm-started PPO learns "
     "to change track: it improves the metric from -0.0662 to -0.0005, a paired gain of +0.0657 on "
     "30 held-out seeds (30 of 30, p < 1e-4) with every train completing, and on a clean network "
-    "it scores 0.0000 and turns in none of 546 clear-track decisions. A2C drifts back to the "
-    "forward reflex and DQN parks half the "
+    "it scores 0.0000 and turns in none of 546 clear-track decisions. A2C never learns the "
+    "crossing (best checkpoint -0.0563) and DQN parks half the "
     "fleet. The junction remains a loss whose failure mode changed with the observation: the "
     "selected checkpoint now dispatches and jams (-0.2400, with 59 of 126 trains completing) instead of parking "
     "(-0.0251, 0 of 126), and it still finishes behind the scripted route follower (-0.1823, "
@@ -219,7 +219,7 @@ for text in [
     "81 of 101 crossover visits with a blocked cell ahead produced a turn, and 0 of 202 with a "
     "clear track did.",
     "A three-algorithm comparison on the same regime: only the warm-started PPO reroutes; A2C "
-    "returns to the reflex and DQN parks half the fleet.",
+    "stays near the baseline without learning the crossing, and DQN parks half the fleet.",
     "An honest paired result on 30 held-out seeds for the corridor (+0.0657, no train lost) and a "
     "junction result that is reported as a loss, with its metric pathology identified.",
 ]:
@@ -376,14 +376,14 @@ body(
     "tree observation is rebuilt for every agent at every step, so the network is not the "
     "bottleneck. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen "
     "four-episode evaluations (runs/xb_b/eval.csv), about 660 environment steps per second, and "
-    "once startup is paid each evaluation interval costs about 146 s (nine of eleven within 145 "
-    "to 155 s, the other two 118 s and 181 s), so the evaluator "
+    "once startup is paid each evaluation interval costs about 148 s (nine of eleven between 143 "
+    "and 155 s, the remaining two 118 s and 181 s), so the evaluator "
     "rather than the optimiser sets the wall clock. We could not run this PettingZoo stack under "
     "SubprocVecEnv at all (it hangs at reset in our runs), so every timing here is single-process. "
     "The shipped corridor run was trained on an x86_64 workstation with an RTX 3080 (system_info "
     "recorded in runs/xb_b/best_model.zip: Linux 7.2.10, Python 3.11.17, torch 2.14.1+cu130, SB3 "
-    "2.9.0); the notebook and the figures also run unchanged on an aarch64 Oracle relay (2 vCPU, "
-    "11 GB) at the same versions, where the twelve tests pass (results/test_run.txt)."
+    "2.9.0); the same stack also runs unchanged on the aarch64 Oracle relay (2 vCPU, 11 GB) used "
+    "for development in this project, where the twelve tests pass (results/test_run.txt)."
 )
 
 # ------------------------------------------------------------------ 3 results
@@ -475,19 +475,19 @@ body(
     "therefore belong to the blockage, not to the policy's habit."
 )
 table([
-    ["Arm", "Best checkpoint", "Internal score", "Completion", "Rendered episode", "Behaviour"],
-    ["PPO (warm start)", "745k", "-0.0005", "1.000", "-0.001", "crosses only when blocked"],
-    ["A2C", "400k", "-0.0563", "1.000", "-0.082", "reflex-like, no crossing in the panel"],
-    ["DQN (gamma 0.999)", "400k", "-0.3234", "0.529", "-0.377", "parks half the fleet"],
-], [3.2, 2.6, 2.4, 2.0, 2.6, 3.6],
-    "Table 3: Corridor training outcome per arm. Internal score and completion come from the "
-    "selection seeds (9001 to 9004 for PPO, 9001 and 9002 for A2C and DQN) and are not the 30-seed "
-    "paired numbers, which are in Table 2. The rendered column and the behaviour column are read "
-    "off Figure 4's labels and panels (seed 3001), which are drawn with make_env rather than the "
-    "evaluator's make_parallel_env, so they are indicative only.")
+    ["Arm", "Best checkpoint", "Internal score", "Completion", "Behaviour in Figure 4"],
+    ["PPO (warm start)", "745k", "-0.0005", "1.000", "crosses only when blocked"],
+    ["A2C", "400k", "-0.0563", "1.000", "no crossing in the panel"],
+    ["DQN (gamma 0.999)", "400k", "-0.3234", "0.529", "parks half the fleet"],
+], [3.4, 2.8, 2.6, 2.2, 6.0],
+    "Table 3: Corridor training outcome per arm. Score and completion are the selection-seed "
+    "numbers (9001 to 9004 for PPO, 9001 and 9002 for A2C and DQN), not the 30-seed paired numbers "
+    "in Table 2. The behaviour column is a reading of the panels in Figure 4, which are rendered "
+    "with make_env rather than the evaluator's make_parallel_env; the panel labels are the "
+    "renderer's own episode scores and are quoted only there, not in this table.")
 body(
     "The other two algorithms are the control for the claim that learning the crossing is not "
-    "automatic. A2C oscillates between the reflex and a parked fleet (-0.0563 at 400k, -0.5746 "
+    "automatic. A2C oscillates between a near-baseline score and a parked fleet (-0.0563 at 400k, -0.5746 "
     "with completion 0.087 at 800k, -0.0736 at 1.2M) and, in the rendered episode, its best "
     "checkpoint never turns at a crossover. DQN with gamma = 0.999 collapses to parking by 800k and stays there, finishing "
     "with completion 0.000; its best checkpoint is 400k, where it still strands half the fleet. "
@@ -653,7 +653,7 @@ table([
     ["render_policy_gif.py", "Episode figures, red-X overlay and optional diagnostic markers"],
     ["verify_rewards.py", "Proves the dense reward reproduces the metric per agent and per term"],
     ["s2_env.py, s2_assembly.py", "Junction environment assembly (rail, fleet, timetable)"],
-    ["build_report.py", "This document; table values are copied from the shipped CSVs, figures from make_report_figures.py"],
+    ["build_report.py", "This document; numbers are copied by hand from the shipped CSVs and figures"],
 ], [4.8, 11.4],
     "Table A1: The modules this report depends on, fifteen analysis modules plus this document's "
     "builder, out of twenty shipped scripts (eighteen analysis, two report builders). The notebook "
@@ -661,8 +661,9 @@ table([
     "scripts, is the graded artefact.")
 
 doc.add_heading("Appendix B  Reproducing the reported results", level=1)
-body("All commands run from the repository root. Steps 1 and 2 build the corridor arm; the "
-     "evaluation and audit steps use the shipped evidence.")
+body("All commands run from the repository root. Steps 1 and 2 rebuild the corridor checkpoint; "
+     "the evaluation and audit steps then use it. runs/ is not tracked, so on a fresh clone either "
+     "run steps 1 and 2 first or point --model at your own checkpoint.")
 for line in [
     "python scripts/bc_warmstart.py collect --episodes 20 --out runs/bc_block/data.npz",
     "python scripts/bc_warmstart.py train --data runs/bc_block/data.npz --out runs/bc_block/bc3.zip "
@@ -691,6 +692,9 @@ for line in [
     "--seeds 3000,3001,3002 --out results/clean_normal.csv",
     "python scripts/crossing_audit.py decisions --variant none --model runs/xb_b/best_model.zip "
     "--seeds 3000,3001,3002 --out results/clean_audit.csv",
+    "python scripts/eval_pair.py --scenario network-simple-compact --conditions delayed "
+    "--baseline forward --priority --observation-radius 50 --model runs/xb_b/best_model.zip "
+    "--seeds 3000,3001,3002 --out results/clean_delayed_none.csv",
     "python scripts/make_report_figures.py && python scripts/build_report.py",
     "python -m unittest discover -s tests && python scripts/verify_rewards.py --policy forward "
     "--seed 2000 --incidents 2",
@@ -702,11 +706,12 @@ for line in [
     p.paragraph_format.left_indent = Cm(0.4)
     p.paragraph_format.space_after = Pt(4)
 
-body("Portability. The notebook, the figures and this report were produced on an aarch64 Oracle "
-     "relay (2 vCPU, 11 GB) as well as on the x86 GPU box, with the same pinned stack; the tests "
-     "and a training-plus-render smoke test pass on both. The environment is CPU-bound, so the "
-     "relay is a valid host even without a GPU, and its 2 vCPU is the practical limit on running "
-     "arms concurrently.")
+body("Portability. The reported training run and the clean-control evaluations ran on an x86_64 "
+     "workstation with an RTX 3080 (system_info in runs/xb_b/best_model.zip, and the RTX box named "
+     "in requirements.txt); the notebook, the figures and this report also run on an aarch64 "
+     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack, where the twelve tests pass "
+     "(results/test_run.txt). The environment is CPU-bound, so the relay is a valid host even "
+     "without a GPU, and its 2 vCPU is the practical limit on running arms concurrently.")
 
 # footer page numbers
 footer = doc.sections[0].footer.paragraphs[0]
