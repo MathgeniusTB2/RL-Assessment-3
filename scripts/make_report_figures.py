@@ -147,7 +147,7 @@ def corridor_arms() -> None:
 def junction_pair() -> None:
     panels = []
     for label, name, idx in (
-        ("route follower   -0.184   126/126", "junction_route_follower.gif", 156),
+        ("route follower   -0.182   126/126", "junction_route_follower.gif", 156),
         ("PPO   -0.240   0.468  (jams)", "junction_ppo.gif", 156),
     ):
         f = frame(name, idx)

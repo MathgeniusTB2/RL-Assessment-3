@@ -184,6 +184,9 @@ def install(env, scenario: str, incidents: int = 2, variant: str | None = None):
     """Install the scenario's disruption regime on a raw RailEnv."""
     if is_compact(scenario):
         chosen = selected_variant(variant)
+        if chosen in ("none", "clean"):
+            # control condition: no disruption installed at all
+            return {}
         if chosen == "block":
             rows = tuple(int(x) for x in (
                 os.environ.get("RL_A3_BLOCK_ROWS") or ",".join(map(str, BLOCK_ROWS))

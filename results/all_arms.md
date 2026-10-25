@@ -14,7 +14,12 @@ same seed and the same disruptions; the delta is the mean per-seed difference.
 Evidence: `results/pair_block_ppo.csv`; curve `results/curves/ppo_corridor_block.csv`;
 figure `results/figures/corridor_{forward,ppo}_block.gif`; crossing audit
 (`scripts/crossing_audit.py decisions`): 101 blocked visits -> 81 turns, 202 open -> 0.
-Controls: clean network +0.0000 with 0 crossings; hand-written detour teacher -0.0005;
+Controls (measured 2026-10-25 on the GPU box): clean network, normal condition, seeds
+3000-3002 -> greedy 0.0000 and PPO 0.0000, delta 0.0000 (`results/clean_normal.csv`), with
+0 turns in 546 clear-track crossover visits (`results/clean_audit.csv`); with the blockage
+suppressed but deadlines still tight (delayed condition, no disruption) PPO is
+-0.0133 against greedy -0.0165, delta +0.0032, 3/3, p = 0.25 (`results/clean_delayed_none.csv`).
+Hand-written detour teacher -0.0005;
 
 ## Legacy: corridor, band regime (retired, 1030-d observation)
 

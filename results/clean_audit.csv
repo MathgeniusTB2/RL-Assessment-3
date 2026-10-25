@@ -1,0 +1,8 @@
+row,col,blocked,visits,turns,seeds,model
+2,6,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+2,25,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+2,62,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+4,51,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+5,4,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+5,22,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
+5,59,0,78,0,"3000,3001,3002",runs/xb_b/best_model.zip
