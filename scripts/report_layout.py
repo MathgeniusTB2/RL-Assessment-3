@@ -81,30 +81,42 @@ def shade(cell, fill: str) -> None:
 class Layout:
     """Paragraph/table/figure emitters bound to one Document."""
 
-    def __init__(self, doc, fig_dir: Path):
+    def __init__(self, doc, fig_dir: Path, max_width_cm: float | None = None,
+                 font: str | None = None):
         self.doc = doc
         self.fig_dir = Path(fig_dir)
+        self.max_width_cm = max_width_cm
+        self.font = font
+
+    def _style_run(self, run):
+        """Pin the run font when this document has its own typeface."""
+        if self.font:
+            run.font.name = self.font
+            force_font(run._r, self.font)
+        return run
 
     def body(self, text: str):
-        p = self.doc.add_paragraph(text)
+        p = self.doc.add_paragraph()
+        self._style_run(p.add_run(text))
         p.paragraph_format.space_after = Pt(6)
         return p
 
     def bullet(self, text: str):
         if "List Bullet" in {s.name for s in self.doc.styles}:
-            p = self.doc.add_paragraph(text, style="List Bullet")
+            p = self.doc.add_paragraph(style="List Bullet")
+            self._style_run(p.add_run(text))
         else:
             # the Part E template ships no list style: draw the bullet ourselves
             p = self.doc.add_paragraph()
             p.paragraph_format.left_indent = Cm(0.65)
             p.paragraph_format.first_line_indent = Cm(-0.4)
-            p.add_run("\u2022  " + text)
+            self._style_run(p.add_run("\u2022  " + text))
         p.paragraph_format.space_after = Pt(3)
         return p
 
     def caption(self, text: str):
         p = self.doc.add_paragraph()
-        r = p.add_run(text)
+        r = self._style_run(p.add_run(text))
         r.italic = True
         r.font.size = Pt(9)
         r.font.color.rgb = GREY
@@ -112,7 +124,10 @@ class Layout:
         p.paragraph_format.space_after = Pt(12)
         return p
 
-    def figure(self, name: str, width_cm: float, text: str):
+    def figure(self, name: str, width_cm: float, text: str, max_width_cm: float | None = None):
+        max_width_cm = max_width_cm or self.max_width_cm
+        if max_width_cm:
+            width_cm = min(width_cm, max_width_cm)
         p = self.doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(6)
@@ -121,7 +136,11 @@ class Layout:
         self.caption(text)
         return p
 
-    def table(self, rows, widths, text: str):
+    def table(self, rows, widths, text: str, max_width_cm: float | None = None):
+        max_width_cm = max_width_cm or self.max_width_cm
+        if max_width_cm and sum(widths) > max_width_cm:
+            scale = max_width_cm / sum(widths)
+            widths = [w * scale for w in widths]
         t = self.doc.add_table(rows=len(rows), cols=len(rows[0]))
         t.style = "Table Grid"
         t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -136,7 +155,7 @@ class Layout:
                 p = cell.paragraphs[0]
                 p.paragraph_format.space_before = Pt(1)
                 p.paragraph_format.space_after = Pt(1)
-                r = p.add_run(str(value))
+                r = self._style_run(p.add_run(str(value)))
                 r.font.size = Pt(9)
                 if i == 0:
                     r.bold = True
@@ -154,23 +173,80 @@ class Layout:
         self.doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
 
-def add_page_footer(doc, left_text: str) -> None:
-    """Centre footer: '<left_text>    |    page <n>' with a live PAGE field."""
+def add_page_footer(doc, left_text: str, font: str | None = None, size: float = 8.5) -> None:
+    """Centre footer: '<left_text>    |    page <n>' with a live PAGE field.
+
+    The template ships no Footer style, so the paragraph is pinned to Normal;
+    otherwise the footer falls back to the 11 pt Calibri default.
+    """
     footer = doc.sections[0].footer.paragraphs[0]
+    footer.style = doc.styles["Normal"]
     footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = footer.add_run(f"{left_text}    |    page ")
-    run.font.size = Pt(8.5)
-    run.font.color.rgb = GREY
-    fld = OxmlElement("w:fldSimple")
-    fld.set(qn("w:instr"), "PAGE")
-    rel = OxmlElement("w:r")
-    rPr = OxmlElement("w:rPr")
-    size = OxmlElement("w:sz")
-    size.set(qn("w:val"), "17")
-    rPr.append(size)
-    rel.append(rPr)
-    t = OxmlElement("w:t")
-    t.text = "1"
-    rel.append(t)
-    fld.append(rel)
-    footer._p.append(fld)
+
+    def styled(text: str | None = None):
+        run = footer.add_run(text or "")
+        run.font.size = Pt(size)
+        run.font.color.rgb = GREY
+        if font:
+            run.font.name = font
+            force_font(run._r, font)
+        return run
+
+    styled(f"{left_text}    |    page ")
+
+    for kind, value in (("begin", None), (None, " PAGE "), ("separate", None)):
+        run = styled()
+        if kind:
+            fld = OxmlElement("w:fldChar")
+            fld.set(qn("w:fldCharType"), kind)
+            run._r.append(fld)
+        else:
+            instr = OxmlElement("w:instrText")
+            instr.set(qn("xml:space"), "preserve")
+            instr.text = value
+            run._r.append(instr)
+
+    styled("1")
+
+    run = styled()
+    fld = OxmlElement("w:fldChar")
+    fld.set(qn("w:fldCharType"), "end")
+    run._r.append(fld)
+
+
+def set_document_defaults(doc, font: str, size_pt: float) -> None:
+    """Pin the document defaults (the layer the template's duplicate styles fall to)."""
+    root = doc.styles.element
+
+    # the template carries duplicate styleIds; LibreOffice keeps the last one,
+    # python-docx edits the first, so drop the emptier duplicates first
+    seen: dict[str, object] = {}
+    for st in list(root.findall(f"{W}style")):
+        sid = st.get(f"{W}styleId")
+        if not sid:
+            continue
+        if sid not in seen:
+            seen[sid] = st
+        else:
+            keep, drop = (st, seen[sid]) if len(st) > len(seen[sid]) else (seen[sid], st)
+            root.remove(drop)
+            seen[sid] = keep
+
+    rPr = root.find(f"{W}docDefaults/{W}rPrDefault/{W}rPr")
+    if rPr is None:
+        return
+    rFonts = rPr.find(f"{W}rFonts")
+    if rFonts is None:
+        rFonts = OxmlElement("w:rFonts")
+        rPr.insert(0, rFonts)
+    for attr in THEME_ATTRS:
+        key = f"{W}{attr}"
+        if key in rFonts.attrib:
+            del rFonts.attrib[key]
+    for slot in ("ascii", "hAnsi", "eastAsia", "cs"):
+        rFonts.set(f"{W}{slot}", font)
+    sz = rPr.find(f"{W}sz")
+    if sz is None:
+        sz = OxmlElement("w:sz")
+        rPr.append(sz)
+    sz.set(f"{W}val", str(int(size_pt * 2)))

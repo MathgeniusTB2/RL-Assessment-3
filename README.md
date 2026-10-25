@@ -100,12 +100,16 @@ shipped run set.
 ## The two reports
 
 `scripts/build_report.py` writes the standalone report. `scripts/build_part_e_report.py`
-opens `templates/part-e-template.docx`, keeps its cover and section skeleton (Abstract,
-1 Introduction, 2 Architecture, 3 Results, 4 Discussion, 5 References, Appendices A/B)
-and regenerates every section, table and figure from the CSVs in `results/`, so the
-Part E document cannot drift from the evidence. Its contents page is static because
-LibreOffice and Google Docs do not rebuild Word TOC fields, so the page numbers come
-from a two-pass build:
+writes the Part E submission into the unit's own template (`templates/part-e-template.docx`,
+committed as supplied): the cover, section 1, section 4, the references and Appendices A/B
+are kept exactly as the template has them, and only **sections 2 and 3** (plus the abstract
+placeholder) are regenerated from the CSVs in `results/`. The template's own typography is
+kept - Times New Roman 12 pt body, 24/18 pt bold headings, 2.54 cm margins - and its blank
+spacer paragraphs are replaced by explicit page breaks, so each top-level section starts on
+a new page.
+
+The contents page is static because LibreOffice and Google Docs do not rebuild Word TOC
+fields, so the page numbers come from a two-pass build:
 
 ```bash
 python scripts/build_part_e_report.py                    # contents page blank
@@ -115,8 +119,7 @@ python scripts/build_part_e_report.py --map-pdf report/RailTech-A3-PartE-Report.
 python scripts/build_part_e_report.py --pages /tmp/pages.json
 ```
 
-Appendix A of the Part E report carries per-member contribution paragraphs: the
-three are placeholders until the team writes them.
+Appendix A of the template has no per-member text; that is left for the team to write.
 
 ## Setup
 

@@ -24,13 +24,21 @@ import sys
 from pathlib import Path
 
 from docx import Document
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from docx.enum.text import (
+    WD_ALIGN_PARAGRAPH,
+    WD_BREAK,
+    WD_TAB_ALIGNMENT,
+    WD_TAB_LEADER,
+)
+from docx.oxml import OxmlElement
 from docx.shared import Cm, Pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from eval_pair import sign_test_p  # noqa: E402
-from report_layout import W, Layout, add_page_footer, force_font, style_document  # noqa: E402
+from report_layout import (  # noqa: E402
+    W, Layout, add_page_footer, force_font, set_document_defaults,
+)
 
 REPO = Path(__file__).resolve().parents[1]
 RES = REPO / "results"
@@ -145,160 +153,185 @@ def page_of(pdf: Path) -> dict[str, int]:
     found: dict[str, int] = {}
     for name in SECTIONS:
         for i, page in enumerate(pages, 1):
-            if "Table of Contents" in page:  # the contents page lists every heading
+            if "....." in page:  # a contents page: it lists every heading
                 continue
-            lines = [ln.strip() for ln in page.splitlines()]
+            lines = [ln.strip() for ln in page.splitlines() if "....." not in ln]
             if any(ln.startswith(name) for ln in lines):
                 found[name] = i
                 break
     return found
 
 
+
+def prune_unused_media(path: Path) -> None:
+    """Drop image parts the template carried but that no paragraph references.
+
+    Deleting the template's body leaves its image relationships behind, so the
+    saved file would otherwise ship the retired band-regime figures inside the
+    package even though they are never displayed.
+    """
+    import re
+    import zipfile
+
+    with zipfile.ZipFile(path) as z:
+        names = z.namelist()
+        blobs = {n: z.read(n) for n in names}
+
+    rels_name = "word/_rels/document.xml.rels"
+    doc = blobs["word/document.xml"].decode()
+    rels = blobs[rels_name].decode()
+    used = set(re.findall(r'r:(?:embed|link|id)="(rId\d+)"', doc))
+
+    kept_tags, kept_targets = [], set()
+    for tag in re.findall(r"<Relationship [^>]*?/>", rels):
+        rid = re.search(r'Id="(rId\d+)"', tag)
+        target = re.search(r'Target="([^"]+)"', tag)
+        if rid and rid.group(1) in used:
+            kept_tags.append(tag)
+            if target:
+                kept_targets.add(target.group(1).lstrip("/"))
+
+    dropped = [
+        n for n in names
+        if n.startswith("word/media/")
+        and n not in kept_targets
+        and n[len("word/"):] not in kept_targets
+    ]
+    if not dropped:
+        return
+
+    head = rels[: rels.index("<Relationship ")] if "<Relationship " in rels else rels
+    blobs[rels_name] = (head + "".join(kept_tags) + "</Relationships>").encode()
+
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        for n in names:
+            if n in dropped:
+                continue
+            z.writestr(n, blobs[n])
+    print(f"pruned {len(dropped)} unused image part(s)")
+
+
 def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
+    """Keep the template's cover, section 1, section 4, references and appendices;
+    replace sections 2 and 3 with the shipped content."""
     doc = Document(str(template))
     body = doc.element.body
 
-    # keep the cover and the "Table of Contents" marker, drop the rest
+    def text_of(el) -> str:
+        # only real text runs: itertext() also collects field instructions and
+        # repeats runs that carry xml:space twice
+        return "".join(t.text or "" for t in el.iter(f"{W}t")).strip()
+
+    def heading_el(prefix: str):
+        """The real heading paragraph, not a contents entry that repeats its text."""
+        for k in body:
+            if not k.tag.endswith("}p"):
+                continue
+            pPr = k.find(f"{W}pPr")
+            st = pPr.find(f"{W}pStyle") if pPr is not None else None
+            if st is None or st.get(f"{W}val") not in ("Heading1", "Heading2", "Heading3"):
+                continue
+            if text_of(k).startswith(prefix):
+                return k
+        raise LookupError(f"heading not found: {prefix}")
+
     kids = list(body)
-    marker = next(
-        k for k in kids
-        if k.tag.endswith("}p") and "Table of Contents" in "".join(k.itertext())
-    )
-    for k in kids[kids.index(marker) + 1:]:
-        if k.tag.endswith("}sectPr"):  # page setup lives here; removing it breaks the document
+    marker = next(k for k in kids if k.tag.endswith("}p") and "Table of Contents" in text_of(k))
+    abstract = heading_el("Abstract")
+    sec2 = heading_el("2. Overview")
+    sec4 = heading_el("4. Discussion")
+
+    # where the replaced block used to sit: right after the last paragraph of section 1
+    anchor = sec2.getprevious()
+
+    # blank contents area and the two replaced sections
+    for k in kids[kids.index(marker) + 1:kids.index(abstract)]:
+        body.remove(k)
+    for k in kids[kids.index(sec2):kids.index(sec4)]:
+        if k.tag.endswith("}sectPr"):
             continue
         body.remove(k)
 
-    style_document(doc)
-    add_page_footer(doc, "RailTech, 43008 Assessment 3 (Part E)")
-    # the template's cover text carries a typo and a missing space before the IDs
+    # keep the template's typography: Times New Roman 12 pt body, Times 24/18 pt
+    # bold headings, 2.54 cm margins
+    set_document_defaults(doc, "Times New Roman", 12)
+    for st in doc.styles:
+        if st.name and st.name.lower() in ("normal", "footer", "header", "page number"):
+            force_font(st.element, "Times New Roman")
+            st.font.name = "Times New Roman"
+            st.font.size = Pt(12)
+    add_page_footer(doc, "RailTech, 43008 Assessment 3 (Part E)",
+                    font="Times New Roman", size=9)
+
+    # the template's cover carries a typo and a missing space before the IDs
     for k in kids[:kids.index(marker)]:
         for run in k.iter(f"{W}t"):
             if run.text:
                 run.text = (run.text
                             .replace("Assignent-3, Part-E", "Assignment 3, Part E")
-                            .replace("Martirosov(", "Martirosov (")
-                            .replace("26 October 2026", "25 October 2026"))
+                            .replace("Martirosov(", "Martirosov ("))
 
-    # the cover keeps its own sizes but follows the report's typeface
-    for k in [*kids[:kids.index(marker)], marker]:
-        for run in k.iter(f"{W}r"):
-            force_font(run, "Calibri")
+    def place(new_els, cursor):
+        """Move freshly created elements to sit, in order, right after cursor."""
+        for el in new_els:
+            body.remove(el)
+            cursor.addnext(el)
+            cursor = el
+        return cursor
 
-    lay = Layout(doc, FIG)
-
-    # ---- contents page (static, from the two-pass map)
+    # ---- contents page (static; page numbers come from the two-pass build)
+    existing = set(body)
     for name in SECTIONS:
         p = doc.add_paragraph()
         p.paragraph_format.space_after = Pt(2)
         p.paragraph_format.tab_stops.add_tab_stop(
-            Cm(16.2), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS
+            Cm(15.7), WD_TAB_ALIGNMENT.RIGHT, WD_TAB_LEADER.DOTS
         )
-        p.add_run(name)
-        p.add_run("\t")
-        p.add_run(str(pages.get(name, "")) if pages else "")
+        for text in (name, "\t", str(pages.get(name, "")) if pages else ""):
+            run = p.add_run(text)
+            run.font.name = "Times New Roman"
+            force_font(run._r, "Times New Roman")
+    place([e for e in body if e not in existing and not e.tag.endswith("}sectPr")], marker)
 
-    lay.page_break()
+    # the template puts the contents on its own page
+    toc_heading = doc.paragraphs[0]
+    for para in doc.paragraphs:
+        if para.text.strip() == "Table of Contents":
+            toc_heading = para
+            break
+    toc_heading.paragraph_format.page_break_before = True
 
-    # ---- abstract
-    doc.add_heading("Abstract", level=1)
-    a = paired(RES / "pair_block_ppo.csv")
-    lay.body(
-        "We ask whether a learned policy can beat a schedule-following controller when a track "
-        "becomes unavailable. Two Flatland scenarios are built from the October 2026 TfNSW GTFS "
-        "feed: a four-track Central-Strathfield corridor with 52 scheduled movements and the "
-        "Granville-Harris Park junction with 126. The corridor is disrupted by an exogenous "
-        "blockage that removes a cell's rail transitions for 400 steps, so a policy cannot make "
-        "the incident vanish by rerouting. Under that regime, and across three algorithms, only "
-        f"the warm-started PPO learns to change track: it improves the metric from {pct(a['base'])} "
-        f"to {pct(a['arm'])}, a paired gain of {a['delta']:+.4f} on 30 held-out seeds "
-        f"({a['wins']} of {a['n']}, p < 1e-4) with every train completing, and on a clean network "
-        "it scores 0.0000 with no crossing at all. A2C never learns the crossing and DQN parks "
-        "half the fleet. The junction remains a loss: the selected checkpoint dispatches and jams "
-        "(-0.2400, 59 of 126 trains home) instead of parking, and still finishes behind the "
-        "scripted route follower (-0.1823)."
-    )
+    # ---- sections 2 and 3, built with the same helpers as the standalone report
+    lay = Layout(doc, FIG, max_width_cm=15.8, font="Times New Roman")
 
-    # ---- 1 introduction
-    doc.add_heading("1. Introduction and Background", level=1)
-    doc.add_heading("1.1 The problem you tried to solve", level=2)
-    lay.body(
-        "A suburban rail corridor is a scheduling problem wrapped in a control problem. The "
-        "timetable is fixed, the track layout offers few alternatives, and the failures that "
-        "matter remove a cell of track for longer than the headway behind it. Classical "
-        "rescheduling solves this with a central optimiser that sees the whole fleet. Our "
-        "question is narrower: with one shared policy controlling every train from its own local "
-        "observation, can a learner discover that it should change track before a blockage, and "
-        "can that behaviour be measured honestly?"
-    )
-    lay.body(
-        "The measurement is half the problem. Flatland's metric charges lateness, missed stops "
-        "and cancellations, and a policy can score well by cancelling trains rather than running "
-        "them. We keep that metric as the objective and report a second statistic, delay_all, "
-        "that charges every agent its arrival minus its scheduled arrival using the episode end "
-        "for a train that never arrives, so a collapsed policy cannot look punctual by dropping "
-        "unfinished trains from a survivors-only mean."
-    )
-    doc.add_heading("1.2 Motivation", level=2)
-    lay.body(
-        "Sydney's network loses whole corridors to signal repairs, overhead wiring and incidents, "
-        "and the recovery decisions are made per train by whoever is watching the panel. A "
-        "policy that learns the local rule - change track at this crossover when that cell is "
-        "blocked - is exactly the shape of decision a signaller makes, and simulation is the only "
-        "place to measure it repeatably. Reinforcement learning fits because the value of a "
-        "diversion depends on what every other train does next, which no schedule can know in "
-        "advance."
-    )
-    doc.add_heading("1.3 Application", level=2)
-    lay.body(
-        "The project delivers a simulation-based pipeline rather than a deployed controller: two "
-        "scenarios built from the real timetable, a shared per-train policy, and an evaluation "
-        "layer that scores any arm against a scripted baseline on the same seeds. Everything runs "
-        "from one notebook (the graded artefact) and the command-line tools in scripts/, which "
-        "execute that notebook's own cells so the CLI and the notebook cannot diverge."
-    )
-    doc.add_heading("1.4 Dataset/Environment", level=2)
-    lay.body(
-        "The data is the TfNSW GTFS static feed (about 1.4 GB), filtered to the Thursday 15 "
-        "October 2026 service between 16:00 and 19:00, with link traversal times derived from the "
-        "shapes rather than from straight-line distance. Two Flatland levels are built from it: a "
-        "condensed four-track Main Suburban corridor and the Main Western junction at Granville, "
-        "where the Suburban pair and the Old Main South converge at grade. Flatland 4.3.0 supplies "
-        "the grid, the switches, the crossovers and the metric."
-    )
-    lay.table(
-        [
-            ["Item", "Corridor", "Junction"],
-            ["Scenario", "network-simple-compact", "granville-harris-park"],
-            ["Level", "87 x 8, four through tracks", "20 x 20 Y-link junction"],
-            ["Movements", "52", "126"],
-            ["Episode budget", "999 steps", "757 steps"],
-            ["Disruption", "2 exogenous blockages, 400 steps", "3 train-borne failures, 220 steps"],
-            ["Observation", "tree depth 3, radius 50, plus 12 features (1032)", "same"],
-            ["Action", "Discrete(5) per train", "same"],
-            ["Held-out seeds", "3000 to 3029", "3000 to 3029 (legacy rows); 3001, 3002 (current)"],
-            ["Baseline", "forward-only reflex", "scripted route follower"],
-        ],
-        [4.2, 6.4, 5.6],
-        "Table 1: Experimental settings. The maps share the observation, action space and "
-        "evaluation protocol; they differ in disruption mechanism because only the corridor has a "
-        "switchable pair of parallel tracks.",
-    )
+    def heading(text: str, level: int):
+        """Heading in the template's own type: Times, bold, 24 pt then 18 pt."""
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(18 if level == 1 else 12)
+        p.paragraph_format.space_after = Pt(8)
+        p.paragraph_format.keep_with_next = True
+        run = p.add_run(text)
+        run.bold = True
+        run.font.size = Pt(24 if level == 1 else 18)
+        run.font.name = "Times New Roman"
+        force_font(run._r, "Times New Roman")
+        return p
 
-    # ---- 2 architecture
-    lay.page_break()
-    doc.add_heading("2. Overview of the architecture/system", level=1)
-    doc.add_heading("2.1 Flow Diagram and Workflow", level=2)
+    existing = set(body)
+
+    # ================================================================ section 2
+    heading("2. Overview of the architecture/system", level=1)
+    heading("2.1 Flow Diagram and Workflow", level=2)
     lay.body(
-        "The workflow runs in seven stages, each with a defined input and output (Figure 1). The "
+        "The workflow runs in seven stages, each with a defined input and output (Figure 3). The "
         "dashed arrow is deliberate: every change to the observation, reward or disruption regime "
-        "was re-validated by re-running the same paired evaluation, so the report only contains "
+        "was re-validated by re-running the same paired evaluation, so this report only contains "
         "numbers produced by the final configuration, with the two labelled junction rows of Table "
-        "6 as the one disclosed exception."
+        "5 as the one disclosed exception."
     )
     lay.figure(
-        "fig_workflow.png", 12.4,
-        "Figure 1: End-to-end workflow. Each stage consumes the artefact produced by the previous "
+        "fig_workflow.png", 15.4,
+        "Figure 3: End-to-end workflow. Each stage consumes the artefact produced by the previous "
         "one; the dashed arrow marks the design loop that re-ran the evaluation after every change.",
     )
     for text in [
@@ -319,11 +352,11 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
     ]:
         lay.bullet(text)
 
-    doc.add_heading("2.2 System Architecture Design", level=2)
+    heading("2.2 System Architecture Design", level=2)
     lay.body(
         "One shared multi-layer perceptron controls every train: 1032 inputs, two hidden layers "
-        "(256 units for PPO, 128 for A2C and DQN) and a five-way action head. The observation is "
-        "a flattened, normalised tree of depth 3 within a radius of 50 cells, plus twelve conflict "
+        "(256 units for PPO, 128 for A2C and DQN) and a five-way action head. The observation is a "
+        "flattened, normalised tree of depth 3 within a radius of 50 cells, plus twelve conflict "
         "and geometry features: slack and its rank, distance to the first occupied cell, distance "
         "to oncoming traffic, malfunctioning trains on my route, my own malfunction countdown, "
         "current speed, whether I am on the map, remaining route length, queue depth, distance to "
@@ -335,57 +368,48 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "The reward is the assessment metric paid densely as a potential, r(t) = R(t) - R(t-1), "
         "where R(t) is what the metric would charge if the episode ended at t. The sum telescopes "
         "to the metric exactly, verified per agent and per term to machine precision, and training "
-        "divides the potential by a constant 100 so the value targets stay O(1). All reported "
-        "arms also use two shaping bonuses on top of the potential: +50 for every train that "
-        "arrives and -1 for every step a train is stuck, at the same 1/100 scale."
+        "divides the potential by a constant 100 so the value targets stay O(1). All reported arms "
+        "also use two shaping bonuses on top of the potential: +50 for every train that arrives "
+        "and -1 for every step a train is stuck, at the same 1/100 scale, which is disclosed here "
+        "because the reported arm is not the bare-metric arm."
     )
     lay.body(
         "From a random initialisation none of the three algorithms finds the crossing, so the "
         "reported corridor arm is PPO fine-tuned from a behaviour-cloned detour baseline "
         "(imitation then RL), with the critic warmed up first. The two independent algorithms are "
-        "the control: they share the observation, reward and regime but not the warm start."
-    )
-    lay.table(
-        [
-            ["Module", "Responsibility"],
-            ["nb_harness.py", "Executes the notebook's cells so the CLI tools use exactly the notebook's code"],
-            ["regimes.py", "Map geometry (seven commit crossovers) and the regime selector (block by default)"],
-            ["disruptions.py", "Both mechanisms: train-borne failures and the exogenous blockage"],
-            ["priority_obs.py", "The twelve conflict/geometry observation features (1032-d input)"],
-            ["metric_rewards.py", "The metric as a dense potential, plus the shaped variant"],
-            ["train_ppo.py", "PPO training, dense reward, checkpoint selection, critic warm-up"],
-            ["train_algo.py", "A2C and DQN on the same environment and evaluator"],
-            ["eval_pair.py", "Paired evaluation of an arm against its baseline on held-out seeds"],
-            ["bc_warmstart.py", "Detour teacher, behaviour-cloning labels, warm-start checkpoint"],
-            ["crossing_audit.py", "Score, per-crossover decisions, and regime exposure"],
-            ["render_policy_gif.py", "Episode figures, red-X overlay and diagnostic markers"],
-            ["verify_rewards.py", "Proves the dense reward reproduces the metric per agent and per term"],
-            ["s2_env.py, s2_assembly.py", "Junction environment assembly (rail, fleet, timetable)"],
-        ],
-        [4.4, 11.8],
-        "Table 2: The modules on a live path. The notebook imports five of them directly; the rest "
-        "are command-line entry points that execute the notebook's cells through nb_harness.",
+        "the control: they share the observation, reward and regime but not the warm start. The "
+        "notebook is the assembly point and imports the shared modules from scripts/ instead of "
+        "duplicating them, so the notebook, the trainers and the evaluator cannot drift apart. "
+        "Twenty scripts ship; the analysis modules the reported tables depend on are nb_harness "
+        "(executes the notebook's own cells), regimes (map geometry and the regime selector, block "
+        "by default), disruptions (both disruption mechanisms), priority_obs (the twelve "
+        "features), metric_rewards (the potential and its shaped variant), train_ppo, train_algo, "
+        "eval_pair, bc_warmstart, crossing_audit, render_policy_gif and verify_rewards, with "
+        "s2_env and s2_assembly assembling the junction."
     )
 
-    doc.add_heading("2.3 GUI/Environment Design", level=2)
+    heading("2.3 GUI/Environment Design", level=2)
     lay.body(
         "Flatland's own renderer is the interface, which the brief permits in place of a separate "
         "GUI: it shows the rail grid with its switches and crossovers, one coloured marker per "
         "train, and a red X on every cell that may not be entered - an exogenous blockage on the "
         "corridor, a train standing in malfunction on the junction. Using the simulator's renderer "
         "means every episode figure comes from the same process the agent is trained in, produced "
-        "headlessly with the PIL backend. Figure 2 shows the corridor level and Figure 3 the "
-        "junction."
+        "headlessly with the PIL backend. Figures 1 and 2 are the two levels; Figures 4 and 5 show "
+        "the same levels under their disruption regimes."
     )
     lay.figure(
-        "fig_corridor_map.png", 16.4,
-        "Figure 2: The corridor. (a) The full 87 x 8 level with 52 movements. (b) Columns 1 to 26 "
-        "at native scale, showing Strathfield, Burwood and the switch ladders.",
+        "fig_corridor_arms.png", 15.8,
+        "Figure 4: The corridor under the block regime, four arms on the same episode (seed 3001; "
+        "step 232 for forward-only, PPO and A2C, step 300 for DQN). The red X is a cell whose rail "
+        "transitions were removed. Forward-only, A2C and DQN leave a queue behind the upper X; "
+        "PPO's track ahead of it is clear because it changed at the previous crossover.",
     )
     lay.figure(
-        "fig_junction.png", 11.0,
-        "Figure 3: The junction. A 20 x 20 level where the Suburban pair and the Old Main South "
-        "converge and diverge, carrying 126 scheduled movements.",
+        "fig_junction_pair.png", 15.0,
+        "Figure 5: The junction at step 156 under the train-borne regime. Left: the scripted route "
+        "follower, with the held train marked. Right: the selected PPO checkpoint, which dispatches "
+        "into the throat and jams.",
     )
     lay.body(
         "The disruption regime is the methodological core. A train-borne failure fires when a "
@@ -395,14 +419,13 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "outright at a seed-drawn step and restored after 400 steps, so the failure exists whether "
         "or not a train goes near it. Two are drawn per episode, one per direction, from the cells "
         "just past each commit crossover; activation is deferred while a cell is occupied, and "
-        "dropped if it stays occupied for 60 steps. Both arms are given the same cells at the "
-        "same seed-drawn steps, so the pairing is by seed and blockage plan."
+        "dropped if it stays occupied for 60 steps. Both arms are given the same cells at the same "
+        "seed-drawn steps, so the pairing is by seed and blockage plan."
     )
 
-    # ---- 3 results
-    lay.page_break()
-    doc.add_heading("3. Results and Evaluation", level=1)
-    doc.add_heading("3.1 Experimental Settings", level=2)
+    # ================================================================ section 3
+    heading("3. Results and Evaluation", level=1)
+    heading("3.1 Experimental Settings", level=2)
     lay.body(
         "Table 1 lists the settings. All arms act deterministically; the corridor arm is "
         "evaluated on seeds 3000 to 3029, which training and checkpoint selection never see, and "
@@ -411,7 +434,26 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "computed per seed and the report gives its mean, median, win count and an exact two-sided "
         "sign test. The score is the assessment metric normalised to [-1, 0], with each train's "
         "cost capped at one episode, summed over all agents and divided by the number of agents "
-        "and the episode budget."
+        "and the episode budget; a second statistic, delay_all, charges every agent and uses the "
+        "episode end for a train that never arrives."
+    )
+    lay.table(
+        [
+            ["Item", "Corridor", "Junction"],
+            ["Scenario", "network-simple-compact", "granville-harris-park"],
+            ["Level", "87 x 8, four through tracks", "20 x 20 Y-link junction"],
+            ["Movements", "52", "126"],
+            ["Episode budget", "999 steps", "757 steps"],
+            ["Disruption", "2 exogenous blockages, 400 steps", "3 train-borne failures, 220 steps"],
+            ["Observation", "tree depth 3, radius 50, plus 12 features (1032)", "same"],
+            ["Action", "Discrete(5) per train", "same"],
+            ["Held-out seeds", "3000 to 3029", "3000 to 3029 (legacy); 3001, 3002 (current)"],
+            ["Baseline", "forward-only reflex", "scripted route follower"],
+        ],
+        [3.6, 6.0, 6.0],
+        "Table 1: Experimental settings. The maps share the observation, action space and "
+        "evaluation protocol; they differ in disruption mechanism because only the corridor has a "
+        "switchable pair of parallel tracks.",
     )
     lay.body(
         "The regime and the policy are CPU-bound: Flatland steps the fleet in Python and the "
@@ -421,12 +463,11 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "interval costs about 148 s, so the evaluator rather than the optimiser sets the wall "
         "clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info recorded "
         "in the checkpoint); the notebook and figures also run on an aarch64 relay with the same "
-        "pinned stack, where the sixteen tests pass. Every table in this report is regenerated "
-        "from the CSVs in results/ by scripts/build_part_e_report.py; the commands that produced "
-        "those CSVs are listed in the repository README and in Appendix B of the standalone report."
+        "pinned stack, where the sixteen tests pass. Every table below is regenerated from the "
+        "CSVs in results/."
     )
 
-    doc.add_heading("3.2 Pre-Processing", level=2)
+    heading("3.2 Pre-Processing", level=2)
     for text in [
         "Service extraction: one Thursday service period, with rail links rather than straight "
         "lines giving traversal times.",
@@ -448,15 +489,16 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
     ]:
         lay.bullet(text)
 
-    doc.add_heading("3.3 Experimental Results", level=2)
+    heading("3.3 Experimental Results", level=2)
+    a = paired(RES / "pair_block_ppo.csv")
     lay.body(
         "The corridor result is the headline. PPO improves the score from -0.0662 to -0.0005, a "
-        f"mean paired gain of {a['delta']:+.4f} with a median of {a['median']:+.4f} (Table 3). It "
+        f"mean paired gain of {a['delta']:+.4f} with a median of {a['median']:+.4f} (Table 2). It "
         f"wins all {a['n']} seeds and every train completes in both arms, so the gain is "
         f"punctuality rather than cancellation: total lateness falls from {a['delay_base']:.0f} "
         f"steps to {a['delay_arm']:.0f}. The on-time share moves only from "
-        f"{a['on_time_base']:.3f} to {a['on_time_arm']:.3f}: the gain is in how late the affected "
-        "trains are, not in which trains complete. Figure 4 shows the per-seed spread."
+        f"{a['on_time_base']:.3f} to {a['on_time_arm']:.3f}, so the gain is in how late the "
+        "affected trains are, not in which trains complete. Figure 6 shows the per-seed spread."
     )
     lay.table(
         [
@@ -472,45 +514,37 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
                 f"{a['delay_base']:.0f} \u2192 {a['delay_arm']:.0f}",
             ],
         ],
-        [2.4, 2.3, 2.2, 2.0, 1.7, 2.4, 3.2, 3.0],
-        "Table 3: Corridor, 30 paired held-out seeds under the block regime. Only PPO has the full "
-        "paired test; Table 4 reports what the other two algorithms did in training.",
+        [2.0, 1.9, 1.9, 1.8, 1.5, 2.0, 2.7, 2.4],
+        "Table 2: Corridor, 30 paired held-out seeds under the block regime. Only PPO has the full "
+        "paired test; Table 3 reports what the other two algorithms did in training.",
     )
     lay.figure(
-        "fig_delta.png", 9.6,
-        f"Figure 4: The {a['n']} per-seed differences behind Table 3. All {a['n']} are positive, "
+        "fig_delta.png", 11.0,
+        f"Figure 6: The {a['n']} per-seed differences behind Table 2. All {a['n']} are positive, "
         f"with a mean of {a['delta']:+.4f} and a median of {a['median']:+.4f}.",
     )
-
     ppo_ck, ppo_sc, ppo_cp = best_checkpoint("ppo")
     a2c_ck, a2c_sc, a2c_cp = best_checkpoint("a2c")
     dqn_ck, dqn_sc, dqn_cp = best_checkpoint("dqn")
     lay.body(
         "The two independent algorithms are the control for the claim that learning the crossing "
-        "is not automatic, and Figure 6 traces all three arms over the training budget."
+        "is not automatic; Figure 7 traces all three arms over the training budget."
     )
     lay.table(
         [
-            ["Arm", "Best checkpoint", "Internal score", "Completion", "Behaviour in Figure 5"],
+            ["Arm", "Best checkpoint", "Internal score", "Completion", "Behaviour in Figure 4"],
             ["PPO (warm start)", ppo_ck, pct(ppo_sc), comp(ppo_cp), "crosses only when blocked"],
             ["A2C", a2c_ck, pct(a2c_sc), comp(a2c_cp), "no crossing in the panel"],
             ["DQN (gamma 0.999)", dqn_ck, pct(dqn_sc), comp(dqn_cp), "parks half the fleet"],
         ],
-        [3.4, 2.8, 2.6, 2.2, 6.0],
-        "Table 4: Corridor training outcome per arm. Score and completion are the selection-seed "
-        "numbers, not the 30-seed paired numbers in Table 3; the behaviour column is a reading of "
-        "the Figure 5 panels, which are rendered with make_env rather than the evaluator.",
+        [3.2, 2.6, 2.4, 2.0, 5.6],
+        "Table 3: Corridor training outcome per arm. Score and completion are the selection-seed "
+        "numbers, not the 30-seed paired numbers in Table 2; the behaviour column is a reading of "
+        "the Figure 4 panels, which are rendered with make_env rather than the evaluator.",
     )
     lay.figure(
-        "fig_corridor_arms.png", 16.4,
-        "Figure 5: The four corridor arms on the same episode (seed 3001; step 232 for "
-        "forward-only, PPO and A2C, step 300 for DQN). The red X is a cell whose rail transitions "
-        "were removed. Forward-only, A2C and DQN leave a queue behind the upper X; PPO's track "
-        "ahead of it is clear because it changed at the previous crossover.",
-    )
-    lay.figure(
-        "fig_curve.png", 14.5,
-        "Figure 6: The three corridor arms during training, from the internal evaluation used for "
+        "fig_curve.png", 14.0,
+        "Figure 7: The three corridor arms during training, from the internal evaluation used for "
         "checkpoint selection. PPO starts from the behaviour-cloned checkpoint and stays near zero "
         "until it drifts at the end of the budget; A2C and DQN fall into the parking basin. The "
         "dashed line is the forward-only 30-seed mean.",
@@ -527,22 +561,22 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
     lay.table(
         [["Crossover", "Track", "Blocked visits", "Turns", "Open visits", "Turns"], *audit_rows],
         [2.2, 3.0, 3.2, 1.8, 3.0, 1.8],
-        "Table 5: Per-crossover decision audit over seeds 3000 and 3001. Blocked means an "
+        "Table 4: Per-crossover decision audit over seeds 3000 and 3001. Blocked means an "
         "impassable cell ahead on the train's own row within 60 cells. (5,59) is the only "
         "crossover with blocked visits that did not always turn (20 of 40); the CSV records counts "
         "rather than per-visit causes, so none is claimed.",
     )
     lay.figure(
         "fig_audit.png", 11.5,
-        "Figure 7: Turn rate on the visits where the track ahead was blocked.",
+        "Figure 8: Turn rate on the visits where the track ahead was blocked.",
     )
     lay.body(
         f"Of {tb} agent-steps standing on a crossover with a blocked cell ahead, {tb_turns} "
-        f"produced a turn; of {to} with a clear track, {to_turns - to_turns} did (Figure 7). The audit records "
-        "one decision per visit to a commit cell, so 81 turns over two seeds is about 40 diverts "
-        "per episode. The rate is not uniform - four crossovers turn on every blocked visit and "
-        "(5,59) on 20 of 40 - so the behaviour is state-dependent, not a blanket lane swap, and "
-        "the A2C and DQN panels of Figure 5 show what the blanket alternative looks like."
+        f"produced a turn; of {to} with a clear track, {to_turns} did. The audit records one "
+        "decision per visit to a commit cell, so 81 turns over two seeds is about 40 diverts per "
+        "episode. The rate is not uniform - four crossovers turn on every blocked visit and (5,59) "
+        "on 20 of 40 - so the behaviour is state-dependent, not a blanket lane swap, and the A2C "
+        "and DQN panels of Figure 4 show what the blanket alternative looks like."
     )
     clean = paired(RES / "clean_normal.csv")
     tight = paired(RES / "clean_delayed_none.csv")
@@ -553,10 +587,14 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "(results/clean_audit.csv). With the blockage suppressed but the Poisson malfunction layer "
         f"left on, the arm is indistinguishable from the baseline: {pct(tight['arm'])} against "
         f"{pct(tight['base'])}, a paired {tight['delta']:+.4f} on {tight['n']} seeds, "
-        f"{tight['wins']} of {tight['n']} but p = {tight['p']:.2f}. The crossings in Table 5 "
+        f"{tight['wins']} of {tight['n']} but p = {tight['p']:.2f}. The crossings in Table 4 "
         "therefore belong to the blockage, not to the policy's habit."
     )
     jc = paired(RES / "junction_current.csv")
+    lay.body(
+        "The junction is reported as a loss, and its two failure modes bracket the metric's "
+        "pathology."
+    )
     lay.table(
         [
             ["Arm", "Baseline", "Arm", "Delta", "Wins", "Completion (base \u2192 arm)"],
@@ -572,34 +610,26 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
                 f"{comp(jc['compl_base'])} \u2192 {comp(jc['compl_arm'])}",
             ],
         ],
-        [4.6, 2.4, 2.2, 1.8, 1.6, 4.2],
-        "Table 6: Junction results. The first three rows are the recorded 30-seed runs from before "
+        [4.2, 2.2, 2.0, 1.7, 1.5, 3.8],
+        "Table 5: Junction results. The first three rows are the recorded 30-seed runs from before "
         "the two observation features were added, kept as measured: that policy parks the fleet. "
         "The last row is the current checkpoint selected by completion, which departs and jams; it "
         "is a two-seed evaluation shipped as results/junction_current.csv, identically scored on "
-        "both seeds. The rows are not directly comparable and are labelled accordingly.",
+        "both seeds, so treat it as one behaviour. The rows are not directly comparable.",
     )
     lay.body(
-        "The junction is reported as a loss, and its two failure modes bracket the metric's "
-        "pathology. Parking scores better than attempting: every learned 30-seed arm scores about "
-        "+0.15 better than the route follower while completing 0 to 18 per cent of the trains, "
-        "because a cancellation costs about 19 cost units while a dispatch into the jam is charged "
-        "its full delay. The current checkpoint shows the other side: selected by completion "
-        f"rather than score, it sends every dispatched train into the throat, completing "
+        "Parking scores better than attempting: every learned 30-seed arm scores about +0.15 "
+        "better than the route follower while completing 0 to 18 per cent of the trains, because a "
+        "cancellation costs about 19 cost units while a dispatch into the jam is charged its full "
+        f"delay. The current checkpoint shows the other side: selected by completion rather than "
+        f"score, it sends every dispatched train into the throat, completing "
         f"{jc['compl_arm'] * 126:.0f} of 126 and scoring {pct(jc['arm'])}, worse than the scripted "
-        f"baseline at {pct(jc['base'])} with 126 of 126 home. Figure 8 sets the two behaviours side "
-        "by side. Neither is a working junction policy; a global controller, or imitation of the "
-        "route follower, is what that map needs."
+        f"baseline at {pct(jc['base'])} with 126 of 126 home (Figure 5). Neither is a working "
+        "junction policy; a global controller, or imitation of the route follower, is what that "
+        "map needs."
     )
 
-    lay.figure(
-        "fig_junction_pair.png", 13.6,
-        "Figure 8: The junction at step 156 under the train-borne regime, rendered with make_env. "
-        "Left: the scripted route follower, with the held train marked. Right: the selected PPO "
-        "checkpoint, which dispatches into the throat and jams.",
-    )
-
-    doc.add_heading("3.4 Limitations", level=2)
+    heading("3.4 Limitations", level=2)
     for text in [
         "Only PPO has the full 30-seed paired test on the corridor. A2C and DQN are reported from "
         "their selection seeds and the rendered episode; a paired run for them would strengthen "
@@ -610,7 +640,7 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "1.000 while making every affected trip late.",
         "From-scratch learning does not find the crossing, and the A2C and DQN arms demonstrate it "
         "independently. The corridor arm is imitation-then-RL, not pure exploration, and the warm "
-        "start inherits the teacher's osn score of -0.0005.",
+        "start inherits the teacher's own score of -0.0005.",
         "The 30 held-out seeds vary the blockage placement only: fleet, timetable and "
         "deterministic actions are fixed, a single training seed per arm was run, and the mean "
         "delta has a sign test but no confidence interval.",
@@ -621,117 +651,106 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
     ]:
         lay.bullet(text)
 
-    # ---- 4 discussion
-    lay.page_break()
-    doc.add_heading("4. Discussion and Conclusions", level=1)
-    lay.body(
-        "A local policy can learn to reroute, but only if the evaluation makes the decision real, "
-        "and only with a recipe that can find a sparse action. On a four-track corridor cut by "
-        "400-step exogenous blockages, PPO changes track at the commit crossover just before the "
-        f"blockage and turns a paired deficit of {pct(a['base'])} into {pct(a['arm'])} over "
-        f"{a['n']} held-out seeds, winning every seed without losing a train. The same checkpoint "
-        "does nothing when nothing is blocked, and an audit of "
-        f"{tb + to} crossover visits shows that its crossings follow the blockage rather than the "
-        "map. The two independent algorithms do not get there, which makes the corridor result a "
-        "statement about the recipe as much as about the algorithm."
-    )
-    lay.body(
-        "The result depended on fixing the measurement first. A train-borne failure fires when a "
-        "train arrives, so a policy that reroutes suppresses the incident, and a failure placed "
-        "deep inside a station's escape band leaves every follower already past the crossover. "
-        "Removing the cell's transitions instead makes the blockage exogenous, keeps both arms on "
-        "the same incidents, and turns the delayed comparison into a genuine decision."
-    )
-    lay.body(
-        "Three extensions follow. First, the A2C and DQN arms deserve the same 30-seed paired run; "
-        "the current evidence is their selection seeds and the rendered episode. Second, the "
-        "junction needs a global view - a graph or attention observation, or imitation of the "
-        "route follower - because a local tree observation cannot arbitrate 126 trains through "
-        "one throat. Third, the corridor result should be checked against the stronger scripted "
-        "distance-map baseline, not only the forward-only reflex, to see how much of the gain "
-        "survives when the baseline is allowed to divert too."
-    )
+    place([e for e in body if e not in existing and not e.tag.endswith("}sectPr")], anchor)
 
-    # ---- 5 references
-    doc.add_heading("5. References", level=1)
-    for ref in [
-        "Gorrey, M., Segaert, A., Ganko, J., & Kaine, E. (2025, May 21). 'Delay all non-essential "
-        "travel': Commuters warned to expect major delays. The Sydney Morning Herald.",
-        "Li, B., Guo, T., Li, R., Wang, Y., Ou, Y., & Chen, F. (2021). Delay propagation in large "
-        "railway networks with data-driven methods. Physica A: Statistical Mechanics and its "
-        "Applications, 583, 126305.",
-        "Mohanty, S., Nygren, E., Laurent, F., Schneider, M., Scheller, C., Bhattacharya, N., "
-        "Watson, J., Egli, A., Eichenberger, C., & Thadden, T. (2020). Flatland: a framework for "
-        "reinforcement learning on train scheduling. Zenodo / AIcrowd.",
-        "Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., & Dormann, N. (2021). "
-        "Stable-Baselines3: reliable reinforcement learning implementations. Journal of Machine "
-        "Learning Research, 22(268), 1-8.",
-        "Roberts, M. (2024, June 17). Signal repairs cause train disruption in Sydney during "
-        "Monday morning commute. ABC News.",
-        "Semrov, D., Marsetic, R., Zura, M., Todorovski, L., & Srdic, A. (2016). Reinforcement "
-        "learning approach for train rescheduling on a single-track railway. Transportation "
-        "Research Part B, 86, 250-267.",
-        "Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning: An Introduction (2nd ed.). "
-        "MIT Press.",
-        "Sydney Trains. (2025). Sydney Trains Annual Report 2025. Transport for NSW.",
-        "Transport for NSW. (2026). Public transport timetables and GTFS feeds (Open Data). "
-        "https://opendata.transport.nsw.gov.au",
-        "Zhu, Y., & Goverde, R. M. (2019). Railway timetable rescheduling with flexible stopping "
-        "and flexible short-turning during disruptions. Transportation Research Part B, 123, "
-        "149-181.",
-    ]:
-        p = doc.add_paragraph(ref)
-        p.paragraph_format.space_after = Pt(6)
+    # the template's own headings are style-only, which LibreOffice renders in its
+    # default heading face; pin them to the same Times/bold/24-18 pt as ours
+    for k in body:
+        if not k.tag.endswith("}p"):
+            continue
+        pPr = k.find(f"{W}pPr")
+        st = pPr.find(f"{W}pStyle") if pPr is not None else None
+        if st is None or st.get(f"{W}val") not in ("Heading1", "Heading2", "Heading3"):
+            continue
+        size = {"Heading1": 24, "Heading2": 18, "Heading3": 14}[st.get(f"{W}val")]
+        for run in k.iter(f"{W}r"):
+            rPr = run.find(f"{W}rPr")
+            if rPr is None:
+                rPr = OxmlElement("w:rPr")
+                run.insert(0, rPr)
+            force_font(run, "Times New Roman")
+            sz = rPr.find(f"{W}sz")
+            if sz is None:
+                sz = OxmlElement("w:sz")
+                rPr.append(sz)
+            sz.set(f"{W}val", str(size * 2))
+            b = rPr.find(f"{W}b")
+            if b is None:
+                b = OxmlElement("w:b")
+                rPr.append(b)
+        # the style is redundant once the runs carry the type, and its presence is
+        # what stops the page break above from taking effect
+        pStyle = pPr.find(f"{W}pStyle")
+        if pStyle is not None:
+            pPr.remove(pStyle)
 
-    # ---- appendices
-    lay.page_break()
-    doc.add_heading("Appendices", level=1)
-    doc.add_heading("A. Individual Contribution", level=2)
-    lay.body(
-        "Each group member writes up to half a page on their contribution to the project "
-        "development activities."
+    # the template's abstract is a placeholder: fill it with the report's abstract
+    a = paired(RES / "pair_block_ppo.csv")
+    abstract_text = (
+        "We ask whether a learned policy can beat a schedule-following controller when a track "
+        "becomes unavailable. Two Flatland scenarios are built from the October 2026 TfNSW GTFS "
+        "feed: a four-track Central-Strathfield corridor with 52 scheduled movements and the "
+        "Granville-Harris Park junction with 126. The corridor is disrupted by an exogenous "
+        "blockage that removes a cell's rail transitions for 400 steps, so a policy cannot make "
+        "the incident vanish by rerouting. Under that regime, and across three algorithms, only "
+        f"the warm-started PPO learns to change track: it improves the metric from {pct(a['base'])} "
+        f"to {pct(a['arm'])}, a paired gain of {a['delta']:+.4f} on {a['n']} held-out seeds "
+        f"({a['wins']} of {a['n']}, p < 1e-4) with every train completing, and on a clean network "
+        "it scores 0.0000 with no crossing at all. A2C never learns the crossing and DQN parks "
+        "half the fleet. The junction remains a loss: the selected checkpoint dispatches and jams "
+        "(-0.2400, 59 of 126 trains home) instead of parking, and still finishes behind the "
+        "scripted route follower (-0.1823)."
     )
-    for name, draft in [
-        (
-            "Daniel James Martirosov (24948933)",
-            "GTFS extraction and both scenarios; the disruption regimes (band, crossing and the "
-            "exogenous blockage) and the decision they forced; PPO and A2C/DQN training, the "
-            "behaviour-cloned warm start, the paired evaluator and the crossing audit; the "
-            "report and template build scripts.",
-        ),
-        (
-            "Ziheng Deng (25595315)",
-            "[To be completed by the member: 100-150 words on your contribution.]",
-        ),
-        (
-            "Laurean Lim (25049863)",
-            "[To be completed by the member: 100-150 words on your contribution.]",
-        ),
-    ]:
-        p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(6)
-        p.add_run(name).bold = True
-        lay.body(draft)
+    for para in doc.paragraphs:
+        if para.text.strip().startswith("<Add a short abstract"):
+            for run in list(para.runs):
+                run._r.getparent().remove(run._r)
+            run = para.add_run(abstract_text)
+            run.font.name = "Times New Roman"
+            run.font.size = Pt(12)
+            force_font(run._r, "Times New Roman")
+            break
 
-    doc.add_heading("B. Individual Contribution Split", level=2)
-    lay.table(
-        [["Team Member Name", "Percentage"],
-         ["Daniel James Martirosov", "33.33%"],
-         ["Ziheng Deng", "33.33%"],
-         ["Laurean Lim", "33.33%"]],
-        [9.0, 6.0],
-        "Table 7: Agreed contribution split.",
-    )
-    lay.body(
-        "All the team members have discussed and agreed on the above individual contribution to "
-        "the project."
-    )
-    for name in ("Daniel James Martirosov", "Ziheng Deng", "Laurean Lim"):
-        p = doc.add_paragraph(f"{name} : ____________________")
-        p.paragraph_format.space_after = Pt(14)
+    # final layout pass: drop the template's blank spacer paragraphs (sized for its
+    # placeholder text) and give every top-level section its own page with an
+    # explicit break, which both Word and LibreOffice honour
+    cover_cut = list(body).index(marker)
+    for k in list(body)[cover_cut:]:
+        if (k.tag.endswith("}p") and not "".join(k.itertext()).strip()
+                and not k.findall(f".//{W}drawing")):
+            body.remove(k)
+
+    def is_top_heading(k) -> bool:
+        if not k.tag.endswith("}p"):
+            return False
+        text = text_of(k)
+        if not text or len(text) > 60:
+            return False
+        pPr = k.find(f"{W}pPr")
+        st = pPr.find(f"{W}pStyle") if pPr is not None else None
+        if st is not None and st.get(f"{W}val") == "Heading1":
+            return True
+        for run in k.iter(f"{W}r"):
+            rPr = run.find(f"{W}rPr")
+            sz = rPr.find(f"{W}sz") if rPr is not None else None
+            if sz is not None and sz.get(f"{W}val") == "48":
+                return True
+        return False
+
+    wanted = ("Abstract", "1. Introduction", "2. Overview", "3. Results",
+              "4. Discussion", "Appendices")
+    for k in list(body):
+        if not is_top_heading(k):
+            continue
+        if not text_of(k).startswith(wanted) and text_of(k) != "Table of Contents":
+            continue
+        para = doc.add_paragraph()
+        para.add_run().add_break(WD_BREAK.PAGE)
+        k.addprevious(para._p)
 
     out.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(out))
+    prune_unused_media(out)
     print("wrote", out)
 
 
