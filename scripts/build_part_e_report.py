@@ -301,7 +301,7 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
             break
     toc_heading.paragraph_format.page_break_before = True
 
-    # ---- sections 2 and 3, built with the same helpers as the standalone report
+    # ---- sections 2 and 3, built with the same helpers as the LaTeX builder
     lay = Layout(doc, FIG, max_width_cm=15.8, font="Times New Roman")
 
     def heading(text: str, level: int):
@@ -464,7 +464,7 @@ def build(template: Path, out: Path, pages: dict[str, int] | None) -> None:
         "clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info recorded "
         "in the checkpoint); the notebook and figures also run on an aarch64 relay with the same "
         "pinned stack, where the sixteen tests pass. Every table below is regenerated from the "
-        "CSVs in results/."
+        "CSVs in results/ by scripts/build_part_e_tex.py and scripts/build_part_e_report.py."
     )
 
     heading("3.2 Pre-Processing", level=2)

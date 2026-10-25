@@ -1,9 +1,8 @@
-"""Shared layout helpers for the two report builders.
+"""Layout helpers for the Part E docx builder.
 
-`build_report.py` writes the standalone 15-page report; `build_part_e_report.py`
-writes the same content into the unit's Part E template.  Both need the same
-paragraph, table, figure and caption styling, so it lives here rather than in
-each builder.
+`build_part_e_report.py` writes the .docx version of the Part E report (for Google
+Docs); `build_part_e_tex.py` writes the LaTeX version. The paragraph, table, figure
+and caption styling shared by the docx output lives here.
 """
 from __future__ import annotations
 

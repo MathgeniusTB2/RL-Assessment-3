@@ -57,7 +57,9 @@ attempting the junction. Rows: `results/pair_block_ppo.csv`, `results/v2_*.csv`.
 notebooks/
   train_schedule_optimisation.ipynb   the deliverable (50 cells, both scenarios)
 report/
-  RailTech-A3-Report.docx / .pdf      the standalone report, rebuilt by scripts/build_report.py
+  RailTech-A3-PartE-Report.tex / .pdf the submission, built by scripts/build_part_e_tex.py
+  references.bib                      APA 7th references for the .tex (biblatex-apa + biber)
+  tex_assets/                         the template's two level figures, extracted at build time
   RailTech-A3-PartE-Report.docx / .pdf  the same content in the unit's Part E template
 templates/
   part-e-template.docx                the unit's template, as supplied (source for the above)
@@ -97,29 +99,27 @@ checkpoints no longer load into the current code. The junction numbers are repor
 as measured; reproducing them needs a junction retrain, which is not part of the
 shipped run set.
 
-## The two reports
+## The report
 
-`scripts/build_report.py` writes the standalone report. `scripts/build_part_e_report.py`
-writes the Part E submission into the unit's own template (`templates/part-e-template.docx`,
-committed as supplied): the cover, section 1, section 4, the references and Appendices A/B
-are kept exactly as the template has them, and only **sections 2 and 3** (plus the abstract
-placeholder) are regenerated from the CSVs in `results/`. The template's own typography is
-kept - Times New Roman 12 pt body, 24/18 pt bold headings, 2.54 cm margins - and its blank
-spacer paragraphs are replaced by explicit page breaks, so each top-level section starts on
-a new page.
-
-The contents page is static because LibreOffice and Google Docs do not rebuild Word TOC
-fields, so the page numbers come from a two-pass build:
+The submission is `report/RailTech-A3-PartE-Report.tex` compiled with `latexmk`, into the
+unit's Part E structure (Abstract, 1 Introduction, 2 Architecture, 3 Results, 4 Discussion,
+5 References, Appendices A/B). Section 1 and the appendices come from
+`templates/part-e-template.docx` (committed as supplied, with its two level figures extracted
+to `report/tex_assets/` at build time); sections 2 and 3 are generated from the CSVs in
+`results/`; section 4 is the discussion written for this report.
 
 ```bash
-python scripts/build_part_e_report.py                    # contents page blank
-soffice --headless --convert-to pdf --outdir report report/RailTech-A3-PartE-Report.docx
-python scripts/build_part_e_report.py --map-pdf report/RailTech-A3-PartE-Report.pdf \
-    > /tmp/pages.json
-python scripts/build_part_e_report.py --pages /tmp/pages.json
+python scripts/build_part_e_tex.py      # writes the .tex and compiles the .pdf
 ```
 
-Appendix A of the template has no per-member text; that is left for the team to write.
+Tables and figures are produced by the builder, so every reported number traces to a file in
+`results/`. References are APA 7th edition through `biblatex-apa` and `biber`
+(`report/references.bib`), and the in-text citations are `\parencite` macros, so the reference
+list is generated rather than typed.
+
+`scripts/build_part_e_report.py` writes the same content into the .docx template
+(`report/RailTech-A3-PartE-Report.docx`) for Google Docs. It shares the data readers with the
+LaTeX builder, so the two stay in step.
 
 ## Setup
 
@@ -182,7 +182,7 @@ python scripts/render_policy_gif.py --markers block --model runs/xb_b/best_model
 RL_A3_REGIME=block python scripts/train_algo.py --algo a2c --incidents 2 --out runs/a2c_block
 RL_A3_REGIME=block python scripts/train_algo.py --algo dqn --incidents 2 --gamma 0.999 --out runs/dqn_block
 python scripts/diag_action_collapse.py
-python scripts/make_report_figures.py && python scripts/build_report.py
+python scripts/make_report_figures.py && python scripts/build_part_e_tex.py
 ```
 
 `scripts/nb_harness.py` executes the notebook's cells directly, so training and
