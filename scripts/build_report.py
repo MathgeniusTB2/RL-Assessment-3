@@ -301,7 +301,8 @@ body(
 )
 body(
     "Four design experiments fixed this architecture before the reported matrix was run. First, "
-    "the reward: paid only at the end of an episode, a terminal charge of about 1000 arrives "
+    "the reward: paid only at the end of an episode, a terminal charge of several hundred cost "
+    "units arrives "
     "discounted to 0.37 of its size at the shipped gamma = 0.999, so the metric is paid as a "
     "potential instead, with the identity verified per agent and per term. Second, the observation horizon: at the default "
     "radius of 2 the distance features are effectively binary; at 50 they keep ordinal distance, "
@@ -315,9 +316,10 @@ body(
 doc.add_heading("2.3  Environment and interface", level=2)
 body(
     "Flatland's own renderer is the interface. The assessment permits a renderer in place of a "
-    "separate GUI, and using the simulator's renderer means every figure comes from the same "
-    "process the agent is trained in, produced headlessly with the PIL backend so the figures are "
-    "reproducible. It shows the rail grid with its switches and crossovers, one coloured marker "
+    "separate GUI, and using the simulator's renderer means every episode figure in this report "
+    "comes from the same process the agent is trained in, produced headlessly with the PIL backend "
+    "so the frames are reproducible; Figures 2 and 3 are plates of the two levels rendered the same "
+    "way. It shows the rail grid with its switches and crossovers, one coloured marker "
     "per train, and a red X on every cell that may not be entered: an exogenous blockage on the "
     "corridor, a train standing in malfunction on the junction."
 )
@@ -380,11 +382,12 @@ body(
     "once startup is paid each evaluation interval costs about 148 s (nine of eleven between 143 "
     "and 155 s, the remaining two 118 s and 181 s), so the evaluator "
     "rather than the optimiser sets the wall clock. We could not run this PettingZoo stack under "
-    "SubprocVecEnv at all (it hangs at reset in our runs), so every timing here is single-process. "
+    "SubprocVecEnv at all (it hung at reset every time we tried), so every timing here is "
+    "single-process. "
     "The shipped corridor run was trained on an x86_64 workstation with an RTX 3080 (system_info "
     "recorded in runs/xb_b/best_model.zip: Linux 7.2.10, Python 3.11.17, torch 2.14.1+cu130, SB3 "
-    "2.9.0); the same stack also runs unchanged on the aarch64 Oracle relay (2 vCPU, 11 GB) used "
-    "for development in this project; the twelve tests pass on both (results/test_run.txt)."
+    "2.9.0). The same stack is CPU-only, so it also ran on the aarch64 Oracle relay (2 vCPU, "
+    "11 GB) used for development in this project; the twelve tests pass (results/test_run.txt)."
 )
 
 # ------------------------------------------------------------------ 3 results
@@ -407,7 +410,7 @@ table([
     ["Disruption", "2 exogenous blockages, 400 steps", "3 train-borne failures, 220 steps"],
     ["Observation", "tree depth 3, radius 50, plus 12 features (1032)", "same"],
     ["Action", "Discrete(5) per train", "same"],
-    ["Held-out seeds", "3000 to 3029", "3000 to 3029"],
+    ["Held-out seeds", "3000 to 3029", "3000 to 3029 (legacy rows); 3001, 3002 (current)"],
     ["Checkpoint selection", "unseen seeds, completion then score", "same"],
     ["Baseline", "forward-only reflex", "scripted route follower"],
 ], [4.2, 6.4, 5.6],
@@ -663,7 +666,7 @@ table([
     "imports five directly; the rest are command-line entry points. The notebook, not the "
     "scripts, is the graded artefact.")
 
-doc.add_heading("Appendix B  Reproducing the reported results", level=1)
+doc.add_heading("Appendix B  Reproducing the corridor results", level=1)
 body("All commands run from the repository root. Steps 1 and 2 rebuild the corridor checkpoint; "
      "the evaluation and audit steps then use it. runs/ is not tracked, so on a fresh clone either "
      "run steps 1 and 2 first or point --model at your own checkpoint.")
@@ -712,7 +715,7 @@ for line in [
 body("Portability. The reported training run and the clean-control evaluations ran on an x86_64 "
      "workstation with an RTX 3080 (system_info in runs/xb_b/best_model.zip, and the RTX box named "
      "in requirements.txt); the notebook, the figures and this report also run on an aarch64 "
-     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack; the twelve tests pass on both "
+     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack; the twelve tests pass "
      "(results/test_run.txt). The environment is CPU-bound, so the relay is a valid host even "
      "without a GPU, and its 2 vCPU is the practical limit on running arms concurrently.")
 
