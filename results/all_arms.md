@@ -15,7 +15,6 @@ Evidence: `results/pair_block_ppo.csv`; curve `results/curves/ppo_corridor_block
 figure `results/figures/corridor_{forward,ppo}_block.gif`; crossing audit
 (`scripts/crossing_audit.py decisions`): 101 blocked visits -> 81 turns, 202 open -> 0.
 Controls: clean network +0.0000 with 0 crossings; hand-written detour teacher -0.0005;
-sensitivity 30 x 22-step blockages +0.001 (3 seeds).
 
 ## Legacy: corridor, band regime (retired, 1030-d observation)
 

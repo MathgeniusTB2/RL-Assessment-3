@@ -175,8 +175,8 @@ body(
     "30 held-out seeds (30 of 30, p < 1e-4) with every train completing, and it takes no crossing "
     "at all on a clean network. A2C drifts back to the forward reflex and DQN parks half the "
     "fleet. The junction remains a loss whose failure mode changed with the observation: the "
-    "selected checkpoint now dispatches and jams (-0.2400, 59 of 126 trains) instead of parking "
-    "(-0.0251, 0 of 126), and it still finishes behind the scripted route follower (-0.1841, "
+    "selected checkpoint now dispatches and jams (-0.2400, with 59 of 126 trains completing) instead of parking "
+    "(-0.0251, 0 of 126), and it still finishes behind the scripted route follower (-0.1823, "
     "126 of 126), because the metric charges a cancellation less than a jammed dispatch."
 )
 
@@ -233,7 +233,8 @@ body(
 
 doc.add_heading("2.1  Workflow", level=2)
 body(
-    "The workflow runs in six stages, each with a defined input and output (Figure 1). The dashed "
+    "The workflow runs in seven stages, each with a defined input and output (Figure 1); the first "
+    "two, service extraction and pre-processing, are described together below. The dashed "
     "arrow is deliberate: every change to the observation, reward or disruption regime was "
     "re-validated by re-running the same paired evaluation, so the report only contains numbers "
     "produced by the final configuration."
@@ -251,7 +252,8 @@ for text in [
     "per-train discrete action and the metric potential as reward.",
     "Vectorisation and training: two copies of the fleet for PPO, one for A2C and DQN, one "
     "sub-environment per train, shared policy parameters.",
-    "Checkpoint selection: every 400k steps the policy is scored on unseen seeds (9001 to 9004) "
+    "Checkpoint selection: PPO is scored every 100k steps on unseen seeds 9001 to 9004 (thirteen "
+    "evaluations in the shipped curve); A2C and DQN every 400k steps on two seeds "
     "and the checkpoint is chosen by completion first, then score.",
     "Paired evaluation and reporting: every arm and its baseline on the same 30 held-out seeds "
     "(3000 to 3029), scored on the untouched metric, with an exact sign test.",
@@ -264,8 +266,10 @@ body(
     "defines the scenarios, the observation builder, the environment factory, the baseline, the "
     "training loop and the evaluator, and imports the shared modules in scripts/ instead of "
     "duplicating them, so the notebook, the training scripts and the reported tables cannot drift "
-    "apart. Eighteen scripts ship; Appendix A maps each to its responsibility, and anything else "
-    "named in an earlier version of this project is in attic/ and is not on a live path."
+    "apart in the sense that matters: one environment definition, one observation, one regime, one "
+    "evaluator. Rendered frames are drawn with make_env while evaluation uses make_parallel_env, "
+    "so a rendered score is indicative and every reported number comes from eval_pair. Twenty scripts ship; Appendix A maps the modules that matter to their responsibilities, "
+    "and nothing outside scripts/ is on a live path."
 )
 body(
     "The learning layer uses one shared multi-layer perceptron for all trains: 1032 inputs, two "
@@ -326,7 +330,8 @@ body(
     "The exogenous design. On the corridor a blockage removes a cell's rail transitions outright "
     "at a seed-drawn step and restores them after 400 steps, so it exists whether or not a train "
     "goes near it. Two are drawn per episode, one per direction, from the cells just past each "
-    "commit crossover, and the pool spans both rows of each switchable pair: a blockage on "
+    "commit crossover; the pool spans both up rows (2 and 4) and the down-local row (5), because "
+    "the down-suburban row carries no commit crossover. A blockage on "
     "up_local just past Central catches a train that changed track at Burwood to dodge a blockage "
     "on up_sub. Activation is deferred while a cell is occupied, because removing the transitions "
     "under a standing train would strand it permanently. Both arms therefore face identical cells "
@@ -335,13 +340,13 @@ body(
 body(
     "Duration is the lever that makes crossing pay. The detour between the two up tracks costs two "
     "cells, so a blockage shorter than that is not worth avoiding. The shipped regime holds a cell "
-    "for 400 steps, about 40 per cent of an episode; Section 3.5 reports the opposite extreme, 30 "
-    "blockages of 22 steps, where the advantage collapses to +0.001."
+    "for 400 steps, about 40 per cent of an episode, which is the regime the reported arm was "
+    "trained and evaluated on."
 )
 body(
     "The junction keeps a train-borne regime. It has no pair of parallel tracks, so an exogenous "
     "blockage would have no alternative route to measure. It uses three 220-step failures inside "
-    "the running line, never on a station cell, direction-balanced, with durations fixed so that "
+    "the running line, never on a station cell, with durations fixed so that "
     "every episode is late."
 )
 
@@ -351,8 +356,9 @@ body(
     "observation with its predictor is the cost, so the GPU is not the lever: measured on the same "
     "budget, 52k timesteps took 207 s on CPU and 216 s with the policy on an RTX 3080. Worker "
     "processes do not help either; this PettingZoo stack hangs under SubprocVecEnv. What the "
-    "measurements do show is where the wall clock goes: a marginal training rate of about 1600 to "
-    "1900 agent-steps per second, and roughly 173 s for a four-episode evaluation, so the "
+    "measurements do show is where the wall clock goes: with 104 agent slots per step, 52k "
+    "timesteps is about 5.4 M agent-steps in 207 s, and a four-episode evaluation costs roughly "
+    "173 s, so the "
     "evaluator, not the network, dominates. The shipped notebook and all figures in this report "
     "were executed on an aarch64 Oracle relay (2 vCPU, 11 GB, Python 3.11.17, torch 2.14.1, "
     "flatland 4.3.0, SB3 2.9.0), which is also the host of record for the project; the eleven "
@@ -386,7 +392,7 @@ table([
     "of parallel tracks.")
 body(
     "The score is the assessment metric normalised to [-1, 0]. Each train's cost is capped at one "
-    "episode, summed over 52 trains and divided by the number of agents and the episode budget. A "
+    "episode, summed over all agents and divided by the number of agents and the episode budget. A "
     "second statistic, delay_all, charges every agent its arrival minus its scheduled arrival, "
     "using the episode end for a train that never arrives, so a collapsed policy cannot look "
     "punctual by dropping unfinished trains from a survivors-only mean."
@@ -441,7 +447,9 @@ table([
     ["DQN (gamma 0.999)", "400k", "-0.3234", "0.529", "-0.3768", "parks half the fleet"],
 ], [3.2, 2.6, 2.4, 2.0, 2.6, 3.6],
     "Table 3: Corridor training outcome per arm. Internal score and completion come from the "
-    "selection seeds; the rendered episode is seed 3001, the same episode shown in Figure 4.")
+    "selection seeds; the rendered column is seed 3001 as drawn by the renderer, which uses "
+    "make_env rather than the evaluator's make_parallel_env, so it is indicative - the "
+    "reported numbers are always the paired ones in Table 2.")
 body(
     "The other two algorithms are the control for the claim that learning the crossing is not "
     "automatic. A2C oscillates between the reflex and a parked fleet (-0.0563 at 400k, -0.5746 "
@@ -471,7 +479,8 @@ body(
     "policy that crosses at every crossover also gains on this map: both same-direction tracks "
     "accept the same platforms. The audit counts the decisions themselves. For every agent-step "
     "standing on a commit crossover it records whether a blocked cell lay ahead on that train's "
-    "own row before its next waypoint, and whether the agent chose a lateral action."
+    "own row within 60 cells ahead, and whether the agent chose a lateral action. The per-crossover "
+    "table is shipped as results/crossing_audit_block.csv by scripts/crossing_audit.py."
 )
 table([
     ["Crossover", "Track", "Blocked visits", "Turns", "Open visits", "Turns"],
@@ -485,36 +494,23 @@ table([
     ["Total", "", "101", "81", "202", "0"],
 ], [2.2, 3.0, 3.2, 1.8, 3.0, 1.8],
     "Table 4: Per-crossover decision audit over seeds 3000 and 3001. Blocked means an impassable "
-    "cell ahead on the train's own row before its next waypoint. The 20 missed turns at (5,59) are "
+    "cell ahead on the train's own row within 60 cells. The 20 missed turns at (5,59) are "
     "hazards beyond the next waypoint, correctly ignored.")
 figure("fig_audit.png", 11.5,
        "Figure 7: Turn rate on the visits where the track ahead was blocked. Only the five "
        "crossovers with a blocked visit in this sample are plotted.")
 body(
     "Of 101 agent-steps standing on a crossover with a blocked cell ahead, 81 produced a turn; of "
-    "202 with a clear track, none did. Twenty of the diverts are counted twice in the raw "
+    "202 with a clear track, none did. The audit counts turns, not diverts: a ladder crossing is two "
+    "turns, one per row change, so 81 turns over two seeds is about 40 turns per episode and about "
+    "20 diverts. The "
     "row-change count, because the crossing is a ladder: a train goes from row 2 to row 3 and then "
     "from row 3 to row 4 one step later. The behaviour is therefore state-dependent, not a blanket "
     "lane swap, and the A2C and DQN animations in Figure 4 show what the blanket alternative looks "
     "like."
 )
 
-doc.add_heading("3.5  Sensitivity: many short blockages", level=2)
-table([
-    ["Regime (seeds 3000 to 3002)", "Forward", "PPO", "Delta", "Completion", "Crossings / ep", "Responsive"],
-    ["2 blockages x 400 steps", "-0.0662", "-0.0005", "+0.0657", "1.000", "40", "20"],
-    ["30 blockages x 22 steps", "-0.0040", "-0.0030", "+0.0010", "1.000", "23", "12"],
-], [5.0, 2.2, 2.0, 1.8, 2.2, 2.6, 2.2],
-    "Table 5: Sensitivity to disruption volume. The second row is a three-seed diagnostic, not a "
-    "30-seed result; the first row is the reported comparison.")
-body(
-    "The policy still crosses and the turns are still conditional, but the advantage collapses to "
-    "about +0.001: a 22-step hold costs less than the two cells the detour needs. That is the "
-    "expected shape, and it is the cleanest evidence that the corridor gain comes from the detour "
-    "being worth taking rather than from the metric preferring motion."
-)
-
-doc.add_heading("3.6  The junction: a loss, and a changed failure mode", level=2)
+doc.add_heading("3.5  The junction: a loss, and a changed failure mode", level=2)
 body(
     "The junction is reported as a loss. Services there have no intermediate stops, so each "
     "movement is a single origin-to-target run and the network is a pure arbitration problem: 126 "
@@ -526,18 +522,23 @@ table([
     ["PPO (30 seeds, 1030-d)", "-0.1769", "-0.0251", "+0.1518", "30/30", "1.000 -> 0.000"],
     ["A2C (30 seeds, 1030-d)", "-0.1769", "-0.0251", "+0.1518", "30/30", "1.000 -> 0.000"],
     ["DQN (30 seeds, 1030-d)", "-0.1769", "-0.0208", "+0.1561", "30/30", "1.000 -> 0.183"],
-    ["PPO (current, one episode)", "-0.1841", "-0.2400", "-0.0559", "0/1", "1.000 -> 0.468"],
+    ["PPO (current, 2 seeds)", "-0.1823", "-0.2400", "-0.0577", "0/2", "1.000 -> 0.468"],
 ], [4.6, 2.4, 2.2, 1.8, 1.6, 4.2],
     "Table 6: Junction results. The first three rows are the recorded 30-seed runs from before the "
     "two observation features were added, and they are kept as measured: that policy parked the "
-    "fleet. The last row is the current checkpoint selected by completion, which departs and jams.")
+    "fleet. The last row is the current checkpoint selected by completion, which departs and jams; "
+    "it is a two-seed evaluation shipped as results/junction_current.csv, whose arm score is "
+    "identical on both seeds (its episode is seed-invariant, so treat it as one behaviour), while "
+    "the 30-seed rows "
+    "come from results/v2_*.csv. The two are not directly comparable and are labelled accordingly.")
 body(
     "The old rows are the metric pathology in its purest form: every learned arm scores about "
     "+0.15 better than the route follower while completing 0 to 18 per cent of the trains, because "
     "a cancellation costs about 19 cost units on this map while a dispatch into the jam is charged "
     "its full delay. The current checkpoint shows the other side of the same pathology. Selected "
-    "by completion rather than score, it sends 59 of 126 trains into the throat and jams, scoring "
-    "-0.2400, which is worse than the scripted baseline at -0.1841 with 126 of 126 home. Neither "
+    "by completion rather than score, it sends every dispatched train into the throat and jams: 59 of "
+    "126 complete and the other 67 are stranded, scoring "
+    "-0.2400, which is worse than the scripted baseline at -0.1823 with 126 of 126 home. Neither "
     "outcome is a working junction policy: one is gaming the metric, the other is losing to the "
     "schedule. A global controller, or imitation of the route follower, is what the map needs."
 )
@@ -547,7 +548,7 @@ figure("fig_junction_pair.png", 13.6,
        "home. Right: the selected PPO checkpoint, which dispatches into the throat and jams, 59 of "
        "126 home.")
 
-doc.add_heading("3.7  Limitations", level=2)
+doc.add_heading("3.6  Limitations", level=2)
 for text in [
     "Only PPO has the full 30-seed paired test on the corridor. A2C and DQN are reported from "
     "their selection seeds and from the rendered episode; a paired run for them would strengthen "
@@ -555,8 +556,7 @@ for text in [
     "The corridor decision is local: one crossover per blocked stretch and a two-cell detour. The "
     "result should not be read as evidence that per-agent RL can arbitrate a junction.",
     "The disruption volume is a modelling choice, not data: 2 x 400 steps keeps completion at "
-    "1.000 while making every affected trip late, and Section 3.5 shows the advantage disappearing "
-    "when the holds are short.",
+    "1.000 while making every affected trip late.",
     "From-scratch learning does not find the crossing, and the A2C and DQN arms demonstrate it "
     "independently. The reported corridor arm is PPO warm-started from a behaviour-cloned detour "
     "baseline with the critic warmed up first: imitation-then-RL, not pure exploration.",
@@ -614,7 +614,7 @@ table([
     ["s2_env.py, s2_assembly.py", "Junction environment assembly (rail, fleet, timetable)"],
     ["build_report.py", "This document, from the shipped figures and CSVs"],
 ], [4.8, 11.4],
-    "Table A1: The eighteen shipped scripts. The notebook imports five directly; the rest are "
+    "Table A1: The sixteen modules on a live path, of twenty shipped scripts. The notebook imports five directly; the rest are "
     "command-line entry points. The notebook, not the scripts, is the graded artefact.")
 
 doc.add_heading("Appendix B  Reproducing the reported results", level=1)
@@ -630,7 +630,8 @@ for line in [
     "--eval-every 100000 --pretrain runs/bc_block/bc3.zip --out runs/xb_b",
     "RL_A3_REGIME=block python scripts/eval_pair.py --scenario network-simple-compact "
     "--baseline forward --disruption few_long --incidents 2 --priority --observation-radius 50 "
-    "--model runs/xb_b/best_model.zip --seeds 3000-3029 --out results/pair_block_ppo.csv",
+    "--model runs/xb_b/best_model.zip --seeds \"$(seq -s, 3000 3029)\" "
+    "--out results/pair_block_ppo.csv",
     "RL_A3_REGIME=block python scripts/crossing_audit.py score --model runs/xb_b/best_model.zip "
     "--seeds 3000,3001,3002 --incidents 2",
     "RL_A3_REGIME=block python scripts/crossing_audit.py decisions --model runs/xb_b/best_model.zip "

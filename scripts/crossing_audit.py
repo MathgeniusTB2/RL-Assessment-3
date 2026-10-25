@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import pathlib
 import sys
 from pathlib import Path
 
@@ -216,6 +217,17 @@ def run_decisions(args) -> int:
         turns = sum(v[1] for (cell, blocked), v in stats.items() if blocked == flag)
         label = "blocked" if flag else "open   "
         print(f"\n{label} visits={visits} turns={turns}")
+
+    if getattr(args, "out", None):
+        import csv
+        out = pathlib.Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with out.open("w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["row", "col", "blocked", "visits", "turns", "seeds", "model"])
+            for ((row, col), blocked), (visits, turns) in sorted(stats.items()):
+                w.writerow([row, col, int(blocked), visits, turns, args.seeds, args.model or "forward"])
+        print(f"wrote {out}")
     return 0
 
 
@@ -293,7 +305,9 @@ def main() -> int:
         p.add_argument("--variant", default="block")
         p.add_argument("--policy", default=None, choices=[None, "forward", "detour"])
         p.add_argument("--model", default=None)
-        p.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"])
+        if name == "decisions":
+            p.add_argument("--out", default=None, help="write the per-crossover table as CSV")
+            p.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"])
         if name == "liveness":
             p.add_argument("--distances", default="2,4,6,8,12")
 
