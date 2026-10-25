@@ -78,8 +78,7 @@ code). Both scenarios run from this one notebook: the junction fleet is assemble
 is the graded artefact.
 
 Everything that is no longer on a live path (the retired Scenario2 notebook, the
-abandoned arms, the older reconstruction scripts) is in `attic/`, unscheduled and
-not imported by anything.
+abandoned arms, the older reconstruction scripts) is not part of the delivered tree; those scripts were retired when the block regime replaced them.
 
 Not shipped: the GTFS feed (~1.4 GB) and the model checkpoints (~9 MB each,
 ~1 h to rebuild from scratch including the behaviour-cloning pass). The policy GIFs

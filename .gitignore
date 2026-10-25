@@ -40,6 +40,10 @@ data/gtfs/
 # the evidence behind the reported tables: the corridor paired test, the three junction
 # arms, the shipped curve and the figures the notebook references
 !results/all_arms.md
+!results/sensitivity_long.csv
+!results/sensitivity_short.csv
+!results/junction_current.csv
+!results/crossing_audit_block.csv
 !results/pair_block_ppo.csv
 !results/v2_ppo_s2.csv
 !results/v2_a2c_s2.csv

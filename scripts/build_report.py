@@ -207,7 +207,8 @@ for text in [
     "fleet and timetable shipped as fixed inputs, and one notebook that runs both scenarios.",
     "The assessment metric used as the training reward, paid densely as a potential, "
     "r(t) = R(t) - R(t-1); the sum telescopes to the metric exactly, verified per agent and per "
-    "term at 5.7e-14.",
+    "term to machine precision, and training divides that potential by a constant 100 so the "
+    "value targets stay O(1).",
     "A negative diagnostic result about disruption placement: the original band regime produced "
     "0 of 9 incidents in which any train could still reach its crossover, and a train-borne "
     "failure can be suppressed entirely by the policy whose behaviour is being measured.",
@@ -273,7 +274,7 @@ body(
 )
 body(
     "The learning layer uses one shared multi-layer perceptron for all trains: 1032 inputs, two "
-    "hidden layers of 256 units, and a five-way action head. The observation is a flattened, "
+    "hidden layers (256 units for PPO, 128 for A2C and DQN), and a five-way action head. The observation is a flattened, "
     "normalised tree of depth 3 within a radius of 50 cells, plus twelve conflict and geometry "
     "features: slack and its rank, distance to the first occupied cell, distance to oncoming "
     "traffic, malfunctioning trains on my route, my own malfunction countdown, current speed, "
@@ -356,12 +357,12 @@ body(
     "observation with its predictor is the cost, so the GPU is not the lever: measured on the same "
     "budget, 52k timesteps took 207 s on CPU and 216 s with the policy on an RTX 3080. Worker "
     "processes do not help either; this PettingZoo stack hangs under SubprocVecEnv. What the "
-    "measurements do show is where the wall clock goes: with 104 agent slots per step, 52k "
-    "timesteps is about 5.4 M agent-steps in 207 s, and a four-episode evaluation costs roughly "
+    "measurements do show is where the wall clock goes: the same 52k-timestep run took 207 s on "
+    "CPU and 216 s with the policy on the RTX 3080, and a four-episode evaluation costs roughly "
     "173 s, so the "
     "evaluator, not the network, dominates. The shipped notebook and all figures in this report "
     "were executed on an aarch64 Oracle relay (2 vCPU, 11 GB, Python 3.11.17, torch 2.14.1, "
-    "flatland 4.3.0, SB3 2.9.0), which is also the host of record for the project; the eleven "
+    "flatland 4.3.0, SB3 2.9.0), which is also the host of record for the project; the twelve "
     "tests and a training-and-render smoke test pass there."
 )
 
@@ -442,7 +443,7 @@ body(
 )
 table([
     ["Arm", "Best checkpoint", "Internal score", "Completion", "Rendered episode", "Behaviour"],
-    ["PPO (warm start)", "745k to 905k", "-0.0005", "1.000", "-0.0006", "crosses only when blocked"],
+    ["PPO (warm start)", "745k", "-0.0005", "1.000", "-0.0006", "crosses only when blocked"],
     ["A2C", "400k", "-0.0563", "1.000", "-0.0822", "reflex-like, never crosses"],
     ["DQN (gamma 0.999)", "400k", "-0.3234", "0.529", "-0.3768", "parks half the fleet"],
 ], [3.2, 2.6, 2.4, 2.0, 2.6, 3.6],
@@ -501,9 +502,8 @@ figure("fig_audit.png", 11.5,
        "crossovers with a blocked visit in this sample are plotted.")
 body(
     "Of 101 agent-steps standing on a crossover with a blocked cell ahead, 81 produced a turn; of "
-    "202 with a clear track, none did. The audit counts turns, not diverts: a ladder crossing is two "
-    "turns, one per row change, so 81 turns over two seeds is about 40 turns per episode and about "
-    "20 diverts. The "
+    "202 with a clear track, none did. The audit records one decision per visit to a commit cell, so "
+    "81 turns over two seeds is about 40 diverts per episode. The "
     "row-change count, because the crossing is a ladder: a train goes from row 2 to row 3 and then "
     "from row 3 to row 4 one step later. The behaviour is therefore state-dependent, not a blanket "
     "lane swap, and the A2C and DQN animations in Figure 4 show what the blanket alternative looks "
@@ -524,7 +524,7 @@ table([
     ["DQN (30 seeds, 1030-d)", "-0.1769", "-0.0208", "+0.1561", "30/30", "1.000 -> 0.183"],
     ["PPO (current, 2 seeds)", "-0.1823", "-0.2400", "-0.0577", "0/2", "1.000 -> 0.468"],
 ], [4.6, 2.4, 2.2, 1.8, 1.6, 4.2],
-    "Table 6: Junction results. The first three rows are the recorded 30-seed runs from before the "
+    "Table 5: Junction results. The first three rows are the recorded 30-seed runs from before the "
     "two observation features were added, and they are kept as measured: that policy parked the "
     "fleet. The last row is the current checkpoint selected by completion, which departs and jams; "
     "it is a two-seed evaluation shipped as results/junction_current.csv, whose arm score is "
@@ -543,7 +543,8 @@ body(
     "schedule. A global controller, or imitation of the route follower, is what the map needs."
 )
 figure("fig_junction_pair.png", 13.6,
-       "Figure 8: The junction at step 156 under the train-borne regime. Left: the scripted route "
+       "Figure 8: The junction at step 156 under the train-borne regime, rendered with make_env (so the "
+       "scores shown are indicative; the paired numbers are in Table 5). Left: the scripted route "
        "follower, with the held train marked and the queue cleared around it, 126 of 126 trains "
        "home. Right: the selected PPO checkpoint, which dispatches into the throat and jams, 59 of "
        "126 home.")
@@ -614,7 +615,7 @@ table([
     ["s2_env.py, s2_assembly.py", "Junction environment assembly (rail, fleet, timetable)"],
     ["build_report.py", "This document, from the shipped figures and CSVs"],
 ], [4.8, 11.4],
-    "Table A1: The sixteen modules on a live path, of twenty shipped scripts. The notebook imports five directly; the rest are "
+    "Table A1: The sixteen analysis modules on a live path, of twenty shipped scripts (the rest are the report builders). The notebook imports five directly; the rest are "
     "command-line entry points. The notebook, not the scripts, is the graded artefact.")
 
 doc.add_heading("Appendix B  Reproducing the reported results", level=1)
@@ -624,8 +625,8 @@ for line in [
     "python scripts/bc_warmstart.py collect --episodes 20 --out runs/bc_block/data.npz",
     "python scripts/bc_warmstart.py train --data runs/bc_block/data.npz --out runs/bc_block/bc3.zip "
     "--epochs 8 --turn-weight 20",
-    "python scripts/train_ppo.py --scenario network-simple-compact --disruption few_long "
-    "--incidents 2 --shaping --priority --observation-radius 50 --arrival-bonus 50 "
+    "RL_A3_REGIME=block python scripts/train_ppo.py --scenario network-simple-compact "
+    "--disruption few_long --incidents 2 --shaping --priority --observation-radius 50 --arrival-bonus 50 "
     "--stuck-penalty 1 --timesteps 1200000 --lr 0.0001 --freeze-policy-steps 200000 "
     "--eval-every 100000 --pretrain runs/bc_block/bc3.zip --out runs/xb_b",
     "RL_A3_REGIME=block python scripts/eval_pair.py --scenario network-simple-compact "
@@ -635,10 +636,11 @@ for line in [
     "RL_A3_REGIME=block python scripts/crossing_audit.py score --model runs/xb_b/best_model.zip "
     "--seeds 3000,3001,3002 --incidents 2",
     "RL_A3_REGIME=block python scripts/crossing_audit.py decisions --model runs/xb_b/best_model.zip "
-    "--seeds 3000,3001 --incidents 2",
-    "RL_A3_REGIME=block python scripts/train_algo.py --algo a2c --incidents 2 --out runs/a2c_block",
+    "--seeds 3000,3001 --incidents 2 --out results/crossing_audit_block.csv",
+    "RL_A3_REGIME=block python scripts/train_algo.py --algo a2c --incidents 2 "
+    "--eval-every 400000 --eval-seeds 9001,9002 --out runs/a2c_block",
     "RL_A3_REGIME=block python scripts/train_algo.py --algo dqn --incidents 2 --gamma 0.999 "
-    "--out runs/dqn_block",
+    "--eval-every 400000 --eval-seeds 9001,9002 --out runs/dqn_block",
     "python scripts/render_policy_gif.py --markers block --model runs/xb_b/best_model.zip "
     "--scenario network-simple-compact --seed 3001 --incidents 2 --stride 1 --width 4200 "
     "--out results/figures/corridor_ppo_block.gif",
