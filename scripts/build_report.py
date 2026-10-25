@@ -241,14 +241,15 @@ body(
     "two, service extraction and pre-processing, are described together below. The dashed "
     "arrow is deliberate: every change to the observation, reward or disruption regime was "
     "re-validated by re-running the same paired evaluation, so the report only contains numbers "
-    "produced by the final configuration."
+    "produced by the final configuration, with the two labelled junction rows of Table 5 as the "
+    "one disclosed exception."
 )
 figure("fig_workflow.png", 12.4,
        "Figure 1: End-to-end workflow. Each stage consumes the artefact produced by the previous "
        "one; the dashed arrow marks the design loop that re-ran the evaluation after every change "
        "to observation, reward or regime.")
 for text in [
-    "Service extraction: the GTFS static feed (1.47 GB) is filtered to the Thursday 15 October "
+    "Service extraction: the GTFS static feed (about 1.4 GB) is filtered to the Thursday 15 October "
     "2026 service between 16:00 and 19:00, with link traversal times derived from the shapes.",
     "Scenario construction: two Flatland levels and two timetables, the corridor (87 x 8, 52 "
     "movements) and the junction (20 x 20, 126 movements).",
@@ -383,7 +384,7 @@ body(
     "The shipped corridor run was trained on an x86_64 workstation with an RTX 3080 (system_info "
     "recorded in runs/xb_b/best_model.zip: Linux 7.2.10, Python 3.11.17, torch 2.14.1+cu130, SB3 "
     "2.9.0); the same stack also runs unchanged on the aarch64 Oracle relay (2 vCPU, 11 GB) used "
-    "for development in this project, where the twelve tests pass (results/test_run.txt)."
+    "for development in this project; the twelve tests pass on both (results/test_run.txt)."
 )
 
 # ------------------------------------------------------------------ 3 results
@@ -421,11 +422,11 @@ body(
     "punctual by dropping unfinished trains from a survivors-only mean."
 )
 body(
-    "All arms are evaluated with deterministic actions on seeds 3000 to 3029. Because the baseline "
-    "and the arm run on the same seed, the same env and the same blockages, the comparison is "
-    "paired within seed: a delta is computed per seed and the report gives its mean, median, win "
-    "count and an exact two-sided sign test. Training and checkpoint selection never see these "
-    "seeds."
+    "The corridor arm is evaluated with deterministic actions on seeds 3000 to 3029; A2C and DQN "
+    "are reported from their selection seeds only, as Section 3.6 says. Because the baseline and "
+    "the arm run on the same seed, the same env and the same blockages, the comparison is paired "
+    "within seed: a delta is computed per seed and the report gives its mean, median, win count and "
+    "an exact two-sided sign test. Training and checkpoint selection never see these seeds."
 )
 
 doc.add_heading("3.2  Pre-processing", level=2)
@@ -563,9 +564,11 @@ table([
     "two observation features were added, and they are kept as measured: that policy parked the "
     "fleet. The last row is the current checkpoint selected by completion, which departs and jams; "
     "it is a two-seed evaluation shipped as results/junction_current.csv, whose arm score is "
-    "identical on both seeds (its episode is seed-invariant, so treat it as one behaviour), while "
-    "the 30-seed rows "
-    "come from results/v2_*.csv. The two are not directly comparable and are labelled accordingly.")
+    "identical on both seeds (its episode is seed-invariant, so treat it as one behaviour). The "
+    "30-seed rows are seed-invariant in the same way - one distinct arm score across 30 different "
+    "baselines - so their 30 of 30 means one parked or jammed behaviour beating 30 baselines, not "
+    "30 independent trials. Those rows come from results/v2_*.csv; the two are not directly "
+    "comparable and are labelled accordingly.")
 body(
     "The old rows are the metric pathology in its purest form: every learned arm scores about "
     "+0.15 better than the route follower while completing 0 to 18 per cent of the trains, because "
@@ -709,7 +712,7 @@ for line in [
 body("Portability. The reported training run and the clean-control evaluations ran on an x86_64 "
      "workstation with an RTX 3080 (system_info in runs/xb_b/best_model.zip, and the RTX box named "
      "in requirements.txt); the notebook, the figures and this report also run on an aarch64 "
-     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack, where the twelve tests pass "
+     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack; the twelve tests pass on both "
      "(results/test_run.txt). The environment is CPU-bound, so the relay is a valid host even "
      "without a GPU, and its 2 vCPU is the practical limit on running arms concurrently.")
 
