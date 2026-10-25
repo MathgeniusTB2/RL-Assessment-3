@@ -57,7 +57,10 @@ attempting the junction. Rows: `results/pair_block_ppo.csv`, `results/v2_*.csv`.
 notebooks/
   train_schedule_optimisation.ipynb   the deliverable (50 cells, both scenarios)
 report/
-  RailTech-A3-Report.docx / .pdf      the written report, rebuilt by scripts/build_report.py
+  RailTech-A3-Report.docx / .pdf      the standalone report, rebuilt by scripts/build_report.py
+  RailTech-A3-PartE-Report.docx / .pdf  the same content in the unit's Part E template
+templates/
+  part-e-template.docx                the unit's template, as supplied (source for the above)
 data/levels/                          prebuilt Flatland envs (fixed inputs)
 data/schedules/                       timetables extracted from GTFS
 scripts/                              environment/regime/reward/training modules the notebook imports
@@ -93,6 +96,27 @@ from 1030 to 1032 dimensions (the two blockage/geometry features), so the juncti
 checkpoints no longer load into the current code. The junction numbers are reported
 as measured; reproducing them needs a junction retrain, which is not part of the
 shipped run set.
+
+## The two reports
+
+`scripts/build_report.py` writes the standalone report. `scripts/build_part_e_report.py`
+opens `templates/part-e-template.docx`, keeps its cover and section skeleton (Abstract,
+1 Introduction, 2 Architecture, 3 Results, 4 Discussion, 5 References, Appendices A/B)
+and regenerates every section, table and figure from the CSVs in `results/`, so the
+Part E document cannot drift from the evidence. Its contents page is static because
+LibreOffice and Google Docs do not rebuild Word TOC fields, so the page numbers come
+from a two-pass build:
+
+```bash
+python scripts/build_part_e_report.py                    # contents page blank
+soffice --headless --convert-to pdf --outdir report report/RailTech-A3-PartE-Report.docx
+python scripts/build_part_e_report.py --map-pdf report/RailTech-A3-PartE-Report.pdf \
+    > /tmp/pages.json
+python scripts/build_part_e_report.py --pages /tmp/pages.json
+```
+
+Appendix A of the Part E report carries per-member contribution paragraphs: the
+three are placeholders until the team writes them.
 
 ## Setup
 
