@@ -99,14 +99,14 @@ def main() -> int:
             obs = raw.obs_builder.get_many(list(range(raw.get_num_agents())))
             batch = np.stack([np.asarray(obs[h], dtype=np.float64) for h in handles])
             chosen = model.predict(batch, deterministic=True)[0]
-            return {h: int(a) for h, a in zip(handles, chosen)}
+            return {h: int(a) for h, a in zip(handles, chosen, strict=True)}
 
     env.reset(random_seed=args.seed)
     height = max(120, int(args.width * env.height / max(env.width, 1)))
     renderer = RenderTool(env, gl="PILSVG", screen_width=args.width, screen_height=height)
     cell_px = int(renderer.renderer.gl.nPixCell)
 
-    frames, reached = [], {h: False for h in handles}
+    frames = []
     switches = []          # (row, column, expiry_step, handle)
     prev_row = {}
     try:

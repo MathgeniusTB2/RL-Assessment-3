@@ -19,10 +19,6 @@ from flatland.core.effects_generator import EffectsGenerator, make_multi_effects
 from flatland.envs.malfunction_effects_generators import MalfunctionEffectsGenerator
 from flatland.envs.malfunction_generators import MalfunctionParameters, ParamMalfunctionGen
 
-from flatland.utils.rendertools import RenderTool
-from IPython.display import display, clear_output
-from PIL import Image
-import PIL
 
 from flatland.envs.agent_utils import EnvAgent
 from flatland.envs.timetable_utils import Line
@@ -30,8 +26,6 @@ from flatland.envs.rail_trainrun_data_structures import Waypoint
 
 from flatland.envs.timetable_utils import Timetable
 from collections import Counter, deque
-import statistics
-import time
 
 
 # --- Scenario2.ipynb cell 8 ----------------------------------------------
@@ -428,21 +422,21 @@ def create_timetable(train_config, env):
 
 
 # --- Scenario2.ipynb cell 19 ----------------------------------------------
-def run_manual_test(env, agents, train_config, max_steps=None,
-                    render=True, delay=2, verbose=True):
+def run_manual_test(env, agents, train_config, max_steps=None, verbose=False):
+    """Step the scripted forward reflex through the episode.
 
+    Used by :func:`_reference_arrivals` to read arrival times off a normal
+    run; it never renders, so it needs no renderer.
+    """
     if max_steps is None:
         max_steps = env._max_episode_steps
-
-    # Define the renderer
-    env_renderer = RenderTool(env) if render else None
 
     # Keep track of stations each agent has already stopped at
     completed_stops = {}
     for agent in agents:
         completed_stops[agent.handle] = set()
 
-    for step in range(max_steps):
+    for _ in range(max_steps):
 
         actions = {}
 
@@ -504,20 +498,7 @@ def run_manual_test(env, agents, train_config, max_steps=None,
         # ---------------------------------------------
         observations, rewards, dones, info = env.step(actions)
 
-        # ---------------------------------------------
-        # Render environment
-        # ---------------------------------------------
-        if render:
-            render_env(env, env_renderer=env_renderer)
-
-            # Pause so movement is visible
-            time.sleep(delay)
-
-            # ---------------------------------------------
-            # Print agent information
-            # ---------------------------------------------
-            print(f"\nStep {step}")
-
+        if verbose:
             for agent in env.agents:
                 malfunction = agent.malfunction_handler.malfunction_down_counter
                 print(
@@ -552,7 +533,7 @@ def reference_arrivals(train_config):
     if key not in _REFERENCE_ARRIVALS:
         env, agents = setup_environment(train_config, condition="normal", calibrate=False, verbose=False)
         env.reset(regenerate_rail=False, regenerate_schedule=False)
-        run_manual_test(env, agents, train_config, render=False, verbose=False)
+        run_manual_test(env, agents, train_config, verbose=False)
         _REFERENCE_ARRIVALS[key] = {agent.handle: agent.arrival_time for agent in env.agents}
 
     return _REFERENCE_ARRIVALS[key]

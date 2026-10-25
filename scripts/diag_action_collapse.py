@@ -82,7 +82,7 @@ def main() -> int:
         def fn(obs, handles):
             batch = np.stack([obs[h] for h in handles])
             chosen = model.predict(batch, deterministic=True)[0]
-            return {h: int(a) for h, a in zip(handles, chosen)}
+            return {h: int(a) for h, a in zip(handles, chosen, strict=True)}
         return fn
 
     rng = np.random.default_rng(0)

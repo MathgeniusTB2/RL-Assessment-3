@@ -225,7 +225,7 @@ def _assemble(seq, trips, shapes, coord, names, stop_to_station, platform_of,
         stop_marks.sort()
         idxs = [m[0] for m in stop_marks]
 
-        def time_at(k: int) -> int | None:
+        def time_at(k: int, stop_marks=stop_marks) -> int | None:
             prev = next((m for m in reversed(stop_marks) if m[0] <= k), stop_marks[0])
             nxt = next((m for m in stop_marks if m[0] >= k), stop_marks[-1])
             if prev[0] == nxt[0]:
@@ -245,7 +245,7 @@ def _assemble(seq, trips, shapes, coord, names, stop_to_station, platform_of,
             by_station[station] = (idx, time_at(idx), plat, stop_here)
 
         order = [s for _, s in passed]
-        for a, b in zip(order, order[1:]):
+        for a, b in zip(order, order[1:], strict=False):
             _, dep, plat_o, stopped_o = by_station[a]
             _, arr, plat_d, _ = by_station[b]
             if dep is None or not (w0 <= dep < w1):

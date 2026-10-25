@@ -111,7 +111,11 @@ BLOCK_FIRST = (30, 90)   # activation window of the first blockage (steps)
 BLOCK_GAP = (30, 60)     # spacing to the second
 DURATION_CROSS = 400     # ~40% of a 999-step episode: the queue that waits
                          # loses far more than the 2-cell detour premium
-VARIANT = "band"
+# default regime for the compact corridor: the reported exogenous blockage.
+# "band" (the retired train-borne band) and "crossing" are still reachable with
+# variant=... or RL_A3_REGIME=..., so a bare training call reproduces the report
+# instead of quietly training the retired regime.
+VARIANT = "block"
 
 
 def selected_variant(variant: str | None = None) -> str:

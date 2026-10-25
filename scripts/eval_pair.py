@@ -22,7 +22,6 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import disruptions  # noqa: E402
 import priority_obs  # noqa: E402
 import nb_harness  # noqa: E402
 
@@ -192,7 +191,7 @@ def main() -> int:
         def ppo(raw, obs, handles):
             batch = np.stack([obs[h] for h in handles])
             chosen = model.predict(batch, deterministic=True)[0]
-            return {h: int(a) for h, a in zip(handles, chosen)}
+            return {h: int(a) for h, a in zip(handles, chosen, strict=True)}
     else:
         ppo = None
 
@@ -235,7 +234,7 @@ def main() -> int:
         if ppo is None:
             continue
         p = [r for r in sub if r["policy"] == args.algo]
-        deltas = np.array([b["score"] - a["score"] for a, b in zip(g, p)])
+        deltas = np.array([b["score"] - a["score"] for a, b in zip(g, p, strict=True)])
         wins = int((deltas > 0).sum())
         losses = int((deltas < 0).sum())
         print(

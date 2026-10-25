@@ -164,12 +164,11 @@ def build(rail: Path, services: list[dict], out: Path,
     waypoints, speeds, earliest, latest = {}, [], [], []
     for service_index, service in enumerate(services):
         speed = SPEED_EXPRESS if service.get("express") else SPEED_LOCAL
-        for leg, row_map, heading in (
+        for leg, _row_map, heading in (
             ("outbound", UP_ROW, east),
             ("return", DOWN_ROW, west),
         ):
             stops = service[leg]
-            track = service["track"] if leg == "outbound" else service["return_track"]
             row = (up_row["up_local"] if service_index % 2 else up_row["up_suburban"]) \
                 if leg == "outbound" else \
                 (down_row["down_local"] if service_index % 2 else down_row["down_suburban"])
@@ -226,11 +225,12 @@ def build(rail: Path, services: list[dict], out: Path,
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default="/home/james/Downloads/network(1).mpk")
+    ap.add_argument("--src", required=True,
+                    help="source .mpk level the corridor is condensed from")
     # the full Central-Strathfield timetable is the source this condensed map is derived
-    # from; the scenario itself is retired, so the file lives in attic/
-    ap.add_argument("--schedule",
-                    default=str(REPO / "attic/legacy/data/schedules/central_strathfield_roundtrips.json"))
+    # from; that scenario is retired, so the file is not shipped and must be passed in
+    ap.add_argument("--schedule", required=True,
+                    help="central_strathfield_roundtrips.json from the retired scenario")
     ap.add_argument("--rail-out", default=str(REPO / "data/levels/network_simple_rail.mpk"))
     ap.add_argument("--map-out", default=str(REPO / "data/levels/network_simple_mapping.json"))
     ap.add_argument("--schedule-out", default=str(REPO / "data/schedules/network_simple_timetable.json"))

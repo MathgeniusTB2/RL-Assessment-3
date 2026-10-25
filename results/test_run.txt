@@ -14,8 +14,12 @@ test_band_size_matches_the_report (test_regimes.CompactBand.test_band_size_match
 test_scenario_detection (test_regimes.CompactBand.test_scenario_detection) ... ok
 test_install_requires_a_zone (test_regimes.Guards.test_install_requires_a_zone) ... ok
 test_unknown_scenario_raises (test_regimes.Guards.test_unknown_scenario_raises) ... ok
+test_clean_variant_installs_nothing (test_regimes.VariantSelection.test_clean_variant_installs_nothing) ... ok
+test_default_is_the_reported_block_regime (test_regimes.VariantSelection.test_default_is_the_reported_block_regime) ... ok
+test_env_var_overrides_the_default (test_regimes.VariantSelection.test_env_var_overrides_the_default) ... ok
+test_explicit_argument_beats_the_env_var (test_regimes.VariantSelection.test_explicit_argument_beats_the_env_var) ... ok
 
 ----------------------------------------------------------------------
-Ran 12 tests in 0.001s
+Ran 16 tests in 0.001s
 
 OK

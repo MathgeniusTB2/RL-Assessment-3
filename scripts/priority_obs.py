@@ -75,7 +75,6 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
         # idempotent: the deliverable notebook installs this block as well, and
         # nb_harness execs that cell before a CLI trainer asks for it again
         return
-    n_extra = int(getattr(base_cls, "n_priority", 0)) or N_PRIORITY
 
     class PriorityObs(base_cls):
         n_priority = N_PRIORITY
@@ -90,7 +89,6 @@ def install_priority_features(nb, horizon: int = HORIZON) -> None:
 
         @staticmethod
         def _compute_priority(env, horizon):
-            from flatland.envs.step_utils.states import TrainState
 
             blocked_cells = set(getattr(env, "_blocked_cells", ()) or ())
             try:

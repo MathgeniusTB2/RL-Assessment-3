@@ -10,6 +10,7 @@ Run from the repository root::
 
 from __future__ import annotations
 
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -39,6 +40,35 @@ class CompactBand(unittest.TestCase):
         self.assertTrue(regimes.is_compact("network-simple-compact"))
         self.assertTrue(regimes.is_s2("granville-harris-park"))
         self.assertFalse(regimes.is_compact("granville-harris-park"))
+
+
+class VariantSelection(unittest.TestCase):
+    """The reported regime must be what a bare call selects."""
+
+    def setUp(self) -> None:
+        self._saved = os.environ.get("RL_A3_REGIME")
+        os.environ.pop("RL_A3_REGIME", None)
+
+    def tearDown(self) -> None:
+        if self._saved is None:
+            os.environ.pop("RL_A3_REGIME", None)
+        else:
+            os.environ["RL_A3_REGIME"] = self._saved
+
+    def test_default_is_the_reported_block_regime(self) -> None:
+        self.assertEqual(regimes.selected_variant(), "block")
+
+    def test_env_var_overrides_the_default(self) -> None:
+        os.environ["RL_A3_REGIME"] = "band"
+        self.assertEqual(regimes.selected_variant(), "band")
+
+    def test_explicit_argument_beats_the_env_var(self) -> None:
+        os.environ["RL_A3_REGIME"] = "band"
+        self.assertEqual(regimes.selected_variant("crossing"), "crossing")
+
+    def test_clean_variant_installs_nothing(self) -> None:
+        for name in ("none", "clean"):
+            self.assertEqual(regimes.install(None, "network-simple-compact", 2, variant=name), {})
 
 
 class Guards(unittest.TestCase):

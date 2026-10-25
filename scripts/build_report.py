@@ -387,7 +387,7 @@ body(
     "The shipped corridor run was trained on an x86_64 workstation with an RTX 3080 (system_info "
     "recorded in runs/xb_b/best_model.zip: Linux 7.2.10, Python 3.11.17, torch 2.14.1+cu130, SB3 "
     "2.9.0). The same stack is CPU-only, so it also ran on the aarch64 Oracle relay (2 vCPU, "
-    "11 GB) used for development in this project; the twelve tests pass (results/test_run.txt)."
+    "11 GB) used for development in this project; the sixteen tests pass (results/test_run.txt)."
 )
 
 # ------------------------------------------------------------------ 3 results
@@ -715,7 +715,7 @@ for line in [
 body("Portability. The reported training run and the clean-control evaluations ran on an x86_64 "
      "workstation with an RTX 3080 (system_info in runs/xb_b/best_model.zip, and the RTX box named "
      "in requirements.txt); the notebook, the figures and this report also run on an aarch64 "
-     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack; the twelve tests pass "
+     "Oracle relay (2 vCPU, 11 GB) with the same pinned stack; the sixteen tests pass "
      "(results/test_run.txt). The environment is CPU-bound, so the relay is a valid host even "
      "without a GPU, and its 2 vCPU is the practical limit on running arms concurrently.")
 

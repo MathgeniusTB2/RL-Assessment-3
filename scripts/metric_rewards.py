@@ -1,9 +1,11 @@
 """Dense, metric-faithful training reward for the A3 scenarios.
 
 `DefaultRewards` pays almost everything as lumps at the DONE transition or at
-episode end; with a 1026-step episode the last of those is discounted to ~0.6 %
-at gamma=0.995, so a policy has no local signal for dispatching, serving a
-stop, or avoiding a deadlock until it is far too late.
+episode end; the corridor runs 796 steps and the shipped discount is
+gamma=0.999, so such a lump survives at 0.999**796 ~= 0.45 of its size and the
+gradient is dominated by which episode ended, not by what the train did. A
+policy therefore has no local signal for dispatching, serving a stop, or
+avoiding a deadlock until it is far too late.
 
 This module does **not** re-derive the metric.  It defines a potential
 

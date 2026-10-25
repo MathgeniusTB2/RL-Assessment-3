@@ -66,7 +66,10 @@ results/                              the evidence behind the reported tables
 
 Twenty scripts ship (eighteen analysis modules plus the report builders). The notebook imports five of them directly (`regimes`,
 `metric_rewards`, `priority_obs`, `train_ppo`, `s2_env`) and those pull in the rest:
-`regimes` owns the map geometry and installs one of three disruption variants
+`regimes` owns the map geometry and installs one of four disruption variants -
+`block` (the default and the reported regime), `band` (the retired train-borne band,
+kept as the record of what was rejected), `crossing` and `none` (the clean
+control) - selectable with `RL_A3_REGIME=...` or `variant=`
 (`disruptions.py` holds both the train-borne failures and the exogenous blockage);
 `s2_env` loads its assembly from `s2_assembly.py`. The command-line entry points are
 `train_ppo`, `train_algo`, `eval_pair`, `bc_warmstart` (teacher labels and the

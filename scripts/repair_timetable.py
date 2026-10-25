@@ -47,8 +47,9 @@ from flatland.envs.rewards import DefaultRewards
 from flatland.envs.step_utils.states import TrainState
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-# retired scenario, kept in attic/ as the source for the timetable repair pass
-LEVEL_PATH = REPO_ROOT / "attic" / "legacy" / "data" / "levels" / "central_strathfield.pkl"
+# the retired Central-Strathfield level this repair pass was written against is not
+# shipped; pass it with --level (see main()).
+LEVEL_PATH: Path | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -133,7 +134,7 @@ def fix_targets(env: RailEnv, verbose: bool = True) -> list[int]:
                 print(f"  h{agent.handle}: no reachable target at columns {sorted(cols)}")
             continue
 
-        def score(conf):
+        def score(conf, intended=intended):
             pos, d = conf
             dir_pen = 0 if any(wd == d for _, wd in intended) else 1
             row_pen = min((abs(pos[0] - p[0]) for p, _ in intended if p[1] == pos[1]),
@@ -424,10 +425,15 @@ def report(tag: str, env: RailEnv, seed: int = 0) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--level", required=True,
+                    help="path to the retired Central-Strathfield .pkl this pass repairs")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--slack", type=int, default=1)
     ap.add_argument("--no-fix-targets", action="store_true")
     args = ap.parse_args()
+
+    global LEVEL_PATH
+    LEVEL_PATH = Path(args.level).expanduser()
 
     env = load_env(args.seed)
 

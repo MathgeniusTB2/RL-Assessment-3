@@ -76,7 +76,7 @@ def make_policy(args, raw, handles):
         def policy(obs_map=None, actions=None):
             batch = np.stack([obs_map[h] for h in handles])
             chosen = model.predict(batch, deterministic=True)[0]
-            return {h: int(a) for h, a in zip(handles, chosen)}
+            return {h: int(a) for h, a in zip(handles, chosen, strict=True)}
 
         return policy
     return None
@@ -185,7 +185,7 @@ def run_decisions(args) -> int:
     stats = {}
     for seed in [int(s) for s in args.seeds.split(",")]:
         obs, _ = par.reset(seed=seed)
-        for step in range(1, T + 1):
+        for _ in range(1, T + 1):
             cells = hazards(raw)
             if model_fn is None:
                 acts = {h: MOVE_FORWARD for h in handles}
@@ -305,9 +305,10 @@ def main() -> int:
         p.add_argument("--variant", default="block")
         p.add_argument("--policy", default=None, choices=[None, "forward", "detour"])
         p.add_argument("--model", default=None)
+        p.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"],
+                       help="which SB3 class saved --model")
         if name == "decisions":
             p.add_argument("--out", default=None, help="write the per-crossover table as CSV")
-            p.add_argument("--algo", default="ppo", choices=["ppo", "a2c", "dqn"])
         if name == "liveness":
             p.add_argument("--distances", default="2,4,6,8,12")
 

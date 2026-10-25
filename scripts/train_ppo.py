@@ -35,7 +35,6 @@ os.environ.setdefault("MKL_NUM_THREADS", "4")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import disruptions  # noqa: E402
 import regimes  # noqa: E402
 import priority_obs  # noqa: E402
 import nb_harness  # noqa: E402
@@ -163,7 +162,7 @@ class MetricEvaluator:
             for step in range(1, T + 1):
                 batch = np.stack([obs[h] for h in self.handles])
                 chosen = batch_policy(batch)
-                actions = {h: int(a) for h, a in zip(self.handles, chosen)}
+                actions = {h: int(a) for h, a in zip(self.handles, chosen, strict=True)}
                 obs, rewards, terms, _, infos = self.parallel.step(actions)
                 for h, r in rewards.items():
                     if r is not None:

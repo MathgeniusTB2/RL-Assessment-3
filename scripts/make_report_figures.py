@@ -9,13 +9,11 @@ workflow drawn by this script).
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 from matplotlib.patches import FancyBboxPatch
@@ -190,7 +188,7 @@ def audit() -> None:
     rates = [100 * r[2] / r[1] for r in rows]
     fig, ax = plt.subplots(figsize=(5.8, 3.0))
     bars = ax.bar(labels, rates, color="#2e75b6", width=0.62)
-    for bar, rate in zip(bars, rates):
+    for bar, rate in zip(bars, rates, strict=True):
         ax.text(bar.get_x() + bar.get_width() / 2, rate + 3, f"{rate:.0f}%",
                 ha="center", fontsize=9)
     ax.set_ylim(0, 118)
