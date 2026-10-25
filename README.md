@@ -127,8 +127,8 @@ python scripts/bc_warmstart.py train --data runs/bc_block/data.npz \
     --out runs/bc_block/bc3.zip --epochs 8 --turn-weight 20
 
 # 2. PPO from that checkpoint with the critic warmed up first (~40 min)
-python scripts/train_ppo.py --scenario network-simple-compact --disruption few_long \
-    --incidents 2 --shaping --priority --observation-radius 50 \
+RL_A3_REGIME=block python scripts/train_ppo.py --scenario network-simple-compact \
+    --disruption few_long --incidents 2 --shaping --priority --observation-radius 50 \
     --arrival-bonus 50 --stuck-penalty 1 --timesteps 1200000 --lr 0.0001 \
     --freeze-policy-steps 200000 --eval-every 100000 \
     --pretrain runs/bc_block/bc3.zip --out runs/xb_b

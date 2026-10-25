@@ -259,8 +259,8 @@ for text in [
     "Checkpoint selection: PPO is scored every 100k steps on unseen seeds 9001 to 9004 (thirteen "
     "evaluations in the shipped curve); A2C and DQN every 400k steps on two seeds "
     "and the checkpoint is chosen by completion first, then score.",
-    "Paired evaluation and reporting: every arm and its baseline on the same 30 held-out seeds "
-    "(3000 to 3029), scored on the untouched metric, with an exact sign test.",
+    "Paired evaluation and reporting: the corridor arm and its baseline on the same 30 held-out "
+    "seeds (3000 to 3029), scored on the untouched metric, with an exact sign test.",
 ]:
     bullet(text)
 
@@ -271,8 +271,10 @@ body(
     "training loop and the evaluator, and imports the shared modules in scripts/ instead of "
     "duplicating them, so the notebook, the training scripts and the reported tables cannot drift "
     "apart in the sense that matters: one environment definition, one observation, one regime, one "
-    "evaluator. Rendered frames are drawn with make_env while evaluation uses make_parallel_env, "
-    "so a rendered score is indicative and every reported number comes from eval_pair. Twenty "
+    "evaluator for the reported pairs. Rendered frames are drawn with make_env while evaluation uses make_parallel_env, "
+    "so a rendered score is indicative and every reported paired number comes from eval_pair; the "
+    "internal scores in Table 3 come from the training scripts' own evaluator, and the Table 4 "
+    "counts from crossing_audit.py. Twenty "
     "scripts ship (eighteen analysis, two report builders); Appendix A maps the modules that "
     "matter, and the notebook is the only entry point outside scripts/, calling them rather than "
     "re-implementing them."
@@ -333,9 +335,10 @@ body(
 body(
     "Why a train-borne failure is not neutral. Firing a failure when a train reaches a cell makes "
     "the disruption a function of the policy's own trajectory, with two failure modes. A policy "
-    "that reroutes early can prevent the incident from firing at all: the rerouting checkpoint "
-    "measured here produced 0 of 2 incidents on the internal seeds, and its delayed score was "
-    "bit-identical to the no-disruption episode. And placing the failure anywhere between a "
+    "that reroutes early can prevent the incident from firing at all: in our own testing a "
+    "rerouting checkpoint fired none of the incidents it was given and scored exactly as it did "
+    "with no disruption, which is recorded in results/all_arms.md as a log observation because that "
+    "checkpoint is not shipped. And placing the failure anywhere between a "
     "station's escape crossover and its platform usually puts it where every follower has already "
     "passed the crossover: in the retired band regime none of the 9 sampled incidents left a train "
     "on the approach side, so there was no decision to make (results/all_arms.md)."
@@ -348,7 +351,8 @@ body(
     "the down-suburban row carries no commit crossover. A blockage on "
     "up_local just past Central catches a train that changed track at Burwood to dodge a blockage "
     "on up_sub. Activation is deferred while a cell is occupied, because removing the transitions "
-    "under a standing train would strand it permanently. Both arms are therefore given the same "
+    "under a standing train would strand it permanently; if the cell stays occupied for 60 steps "
+    "the incident is dropped rather than fired. Both arms are therefore given the same "
     "cells at the same seed-drawn steps; because activation waits for an occupied cell to clear "
     "(at most 60 steps), the fired step can shift slightly between arms, and the pairing is by "
     "seed and blockage plan rather than by step index."
@@ -356,8 +360,8 @@ body(
 body(
     "Duration is the lever that makes crossing pay. The detour between the two up tracks costs two "
     "cells, so a blockage shorter than that is not worth avoiding. The shipped regime holds a cell "
-    "for 400 steps, about 40 per cent of an episode, which is the regime the reported arm was "
-    "trained and evaluated on."
+    "for 400 steps, 40 per cent of the 999-step budget and half of the 796-step episode the "
+    "corridor actually runs, which is the regime the reported arm was trained and evaluated on."
 )
 body(
     "The junction keeps a train-borne regime. It has no pair of parallel tracks, so an exogenous "
@@ -372,18 +376,21 @@ body(
     "tree observation is rebuilt for every agent at every step, so the network is not the "
     "bottleneck. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen "
     "four-episode evaluations (runs/xb_b/eval.csv), about 660 environment steps per second, and "
-    "once startup is paid each evaluation interval costs a steady 145 to 155 s, so the evaluator "
+    "once startup is paid each evaluation interval costs about 146 s (nine of eleven within 145 "
+    "to 155 s, the other two 118 s and 181 s), so the evaluator "
     "rather than the optimiser sets the wall clock. We could not run this PettingZoo stack under "
     "SubprocVecEnv at all (it hangs at reset in our runs), so every timing here is single-process. "
-    "The shipped notebook and all figures in this report were executed on an aarch64 Oracle relay "
-    "(2 vCPU, 11 GB, Python 3.11.17, torch 2.14.1, flatland 4.3.0, SB3 2.9.0), which is also the "
-    "host of record for the project; the twelve tests pass there (results/test_run.txt)."
+    "The shipped corridor run was trained on an x86_64 workstation with an RTX 3080 (system_info "
+    "recorded in runs/xb_b/best_model.zip: Linux 7.2.10, Python 3.11.17, torch 2.14.1+cu130, SB3 "
+    "2.9.0); the notebook and the figures also run unchanged on an aarch64 Oracle relay (2 vCPU, "
+    "11 GB) at the same versions, where the twelve tests pass (results/test_run.txt)."
 )
 
 # ------------------------------------------------------------------ 3 results
 doc.add_heading("3  Results and evaluation", level=1)
 body(
-    "This section reports the delayed condition, which is the only condition with headroom. With "
+    "This section reports the disrupted condition - the block regime on the corridor, train-borne "
+    "failures on the junction - which is the only condition with headroom. With "
     "no disruption the corridor baseline is on time and scores exactly 0.0000, and so does the "
     "trained arm (results/clean_normal.csv), so a normal-condition comparison has nothing to "
     "explain."
@@ -454,16 +461,17 @@ body(
     "PPO improves the score from -0.0662 to -0.0005, a mean paired gain of +0.0657 with a median "
     "of +0.0648. It wins all 30 seeds and every train completes in both arms, so the gain is "
     "punctuality rather than cancellation: total lateness falls from 3321 steps to effectively "
-    "zero. The on-time share moves only from 0.625 to 0.635, because the same trains are affected "
-    "in both arms; the policy makes them less late rather than making different trains late."
+    "zero. The on-time share moves only from 0.625 to 0.635: the gain is in how late the affected "
+    "trains are, not in which trains complete."
 )
 body(
     "Under the clean condition the same checkpoint is inert. On three seeds it scores 0.0000, "
     "exactly as the forward-only baseline does (results/clean_normal.csv), and the decision audit "
     "records 546 visits to a commit crossover with a clear track and not one turn "
-    "(results/clean_audit.csv). With the blockage suppressed but the delayed deadlines kept, the "
-    "arm is indistinguishable from the baseline: -0.0133 against -0.0165, a paired +0.0032 on "
-    "three seeds, 3 of 3 but p = 0.25 (results/clean_delayed_none.csv). The crossings in Table 4 "
+    "(results/clean_audit.csv). With the blockage suppressed but the Poisson malfunction layer "
+    "left on, the arm is indistinguishable from the baseline: it scores -0.0133 against -0.0165, "
+    "a paired +0.0032 on three seeds, "
+    "3 of 3 but p = 0.25 (results/clean_delayed_none.csv). The crossings in Table 4 "
     "therefore belong to the blockage, not to the policy's habit."
 )
 table([
@@ -531,7 +539,7 @@ figure("fig_audit.png", 11.5,
 body(
     "Of 101 agent-steps standing on a crossover with a blocked cell ahead, 81 produced a turn; of "
     "202 with a clear track, none did. The audit records one decision per visit to a commit cell, so "
-    "81 turns over two seeds is about 40 diverts per episode, and the rate is not uniform: five "
+    "81 turns over two seeds is about 40 diverts per episode, and the rate is not uniform: four "
     "crossovers turn on every blocked visit and (5,59) on 20 of 40. The behaviour is therefore "
     "state-dependent, not a blanket lane swap, and the A2C and DQN animations in Figure 4 show "
     "what the blanket alternative looks like."
@@ -596,6 +604,10 @@ for text in [
     "not silently refreshed.",
     "Evaluation is entirely simulated. The timetable and the track layout are real; there is no "
     "operational validation and no human factors layer.",
+    "The 30 held-out seeds vary the blockage placement only: fleet, timetable and deterministic "
+    "actions are fixed, and a single training seed per arm was run. The mean delta is reported with "
+    "a sign test but without a confidence interval, and no corridor arm is compared against the "
+    "stronger scripted distance-map baseline.",
 ]:
     bullet(text)
 
@@ -641,7 +653,7 @@ table([
     ["render_policy_gif.py", "Episode figures, red-X overlay and optional diagnostic markers"],
     ["verify_rewards.py", "Proves the dense reward reproduces the metric per agent and per term"],
     ["s2_env.py, s2_assembly.py", "Junction environment assembly (rail, fleet, timetable)"],
-    ["build_report.py", "This document, from the shipped figures and CSVs"],
+    ["build_report.py", "This document; table values are copied from the shipped CSVs, figures from make_report_figures.py"],
 ], [4.8, 11.4],
     "Table A1: The modules this report depends on, fifteen analysis modules plus this document's "
     "builder, out of twenty shipped scripts (eighteen analysis, two report builders). The notebook "
@@ -674,6 +686,11 @@ for line in [
     "python scripts/render_policy_gif.py --markers block --model runs/xb_b/best_model.zip "
     "--scenario network-simple-compact --seed 3001 --incidents 2 --stride 1 --width 4200 "
     "--out results/figures/corridor_ppo_block.gif",
+    "python scripts/eval_pair.py --scenario network-simple-compact --conditions normal "
+    "--baseline forward --priority --observation-radius 50 --model runs/xb_b/best_model.zip "
+    "--seeds 3000,3001,3002 --out results/clean_normal.csv",
+    "python scripts/crossing_audit.py decisions --variant none --model runs/xb_b/best_model.zip "
+    "--seeds 3000,3001,3002 --out results/clean_audit.csv",
     "python scripts/make_report_figures.py && python scripts/build_report.py",
     "python -m unittest discover -s tests && python scripts/verify_rewards.py --policy forward "
     "--seed 2000 --incidents 2",

@@ -17,9 +17,14 @@ figure `results/figures/corridor_{forward,ppo}_block.gif`; crossing audit
 Controls (measured 2026-10-25 on the GPU box): clean network, normal condition, seeds
 3000-3002 -> greedy 0.0000 and PPO 0.0000, delta 0.0000 (`results/clean_normal.csv`), with
 0 turns in 546 clear-track crossover visits (`results/clean_audit.csv`); with the blockage
-suppressed but deadlines still tight (delayed condition, no disruption) PPO is
+suppressed but the Poisson malfunction layer left on PPO is
 -0.0133 against greedy -0.0165, delta +0.0032, 3/3, p = 0.25 (`results/clean_delayed_none.csv`).
 Hand-written detour teacher -0.0005;
+
+Train-borne diagnostic (retired, log record only): with the train-borne band regime a
+rerouting checkpoint fired none of the incidents it was given and scored the same as with
+no disruption at all. The checkpoint was not shipped, so this is a log observation, not a
+reproducible result - and it is the reason the corridor moved to an exogenous blockage.
 
 ## Legacy: corridor, band regime (retired, 1030-d observation)
 
