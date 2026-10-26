@@ -178,12 +178,16 @@ def render(pages: dict[str, int] | None) -> None:
                 if b.kind == "heading" and b.text != "Table of Contents"]
     in_cover = True
     cover_idx = 0
+    pending_break = [False]
     i = 0
     while i < len(blocks):
         b = blocks[i]
+        mark = len(doc.paragraphs)
         if b.kind == "break":
-            p = doc.add_paragraph()
-            p.add_run().add_break(WD_BREAK.PAGE)
+            # mark the next block to start a page: inserting an empty paragraph
+            # with a break in it leaves a blank page when the break lands at a
+            # page boundary
+            pending_break[0] = True
             in_cover = False
         elif b.kind == "para" and b.text.strip() == "@@TOC@@":
             toc(doc, pages, headings)
@@ -217,6 +221,9 @@ def render(pages: dict[str, int] | None) -> None:
                 caption(doc, b.text)
         elif b.kind == "caption":
             caption(doc, b.text)
+        if pending_break[0] and len(doc.paragraphs) > mark:
+            doc.paragraphs[mark].paragraph_format.page_break_before = True
+            pending_break[0] = False
         i += 1
 
     # the @@TOC@@ marker arrives as a para block: render it in place

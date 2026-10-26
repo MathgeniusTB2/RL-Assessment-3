@@ -59,7 +59,7 @@ notebooks/
 report/
   part-e.md                          the report itself, authored in Markdown
   RailTech-A3-PartE-Report.docx / .pdf  the submission, rendered by scripts/build_part_e_docx.py
-  template_figures/                  the template's two level figures, used on page 4
+  template_figures/                  the junction level figure lifted from the template
 templates/
   part-e-template-2.docx              the unit's template, as the team last filled it
 data/levels/                          prebuilt Flatland envs (fixed inputs)
@@ -68,7 +68,7 @@ scripts/                              environment/regime/reward/training modules
 results/                              the evidence behind the reported tables
 ```
 
-Twenty scripts ship (eighteen analysis modules plus the report builders). The notebook imports five of them directly (`regimes`,
+Twenty-five scripts ship (eighteen analysis modules, six build and check tools, one report renderer). The notebook imports five of them directly (`regimes`,
 `metric_rewards`, `priority_obs`, `train_ppo`, `s2_env`) and those pull in the rest:
 `regimes` owns the map geometry and installs one of four disruption variants -
 `block` (the default and the reported regime), `band` (the retired train-borne band,

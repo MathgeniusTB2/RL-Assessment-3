@@ -128,7 +128,7 @@ Table 1 lists the settings. All arms act deterministically; the corridor arm is 
 
 :Table 1: Experimental settings. The maps share the observation, action space and evaluation protocol; they differ in disruption mechanism because only the corridor has a switchable pair of parallel tracks.
 
-The regime and the policy are CPU-bound: Flatland steps the fleet in Python and the 1032-d tree observation is rebuilt for every agent at every step. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen four-episode evaluations (about 660 environment steps per second), and once startup is paid each evaluation interval costs about 148 s, so the evaluator rather than the optimiser sets the wall clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info recorded inside runs/xb_b/best_model.zip); the notebook and the figures also run on an aarch64 relay with the same pinned stack, and the sixteen tests pass (results/test_run.txt). Every table below is regenerated from the CSVs in results/.
+The regime and the policy are CPU-bound: Flatland steps the fleet in Python and the 1032-d tree observation is rebuilt for every agent at every step. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen four-episode evaluations (about 660 environment steps per second), and once startup is paid each evaluation interval costs about 148 s, so the evaluator rather than the optimiser sets the wall clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info inside runs/xb_b/best_model.zip records x86_64 with CUDA available); the notebook and the figures also run on an aarch64 relay with the same pinned stack, and the sixteen tests pass (results/test_run.txt). Every table below is regenerated from the CSVs in results/.
 
 ## 3.2 Pre-Processing
 
@@ -224,3 +224,51 @@ The result depended on fixing the measurement first. A train-borne failure fires
 The junction is where the metric, not the learner, is the story. Parking wins on the metric because a cancellation is charged about 19 cost units while a dispatch into the jam pays its full delay: three 30-seed arms score about +0.15 better than the route follower while completing 0 to 18 per cent of the trains. Selecting the checkpoint by completion reverses the failure without fixing it: the current arm sends every dispatched train into the throat, completes 59 of 126 and scores -0.2400 against a two-seed baseline of -0.1823. That row also comes from a later observation version than the three above it, so it is read on its own rather than as a like-for-like comparison. Read together, the two rows say the same thing: the metric ranks cancelling a service above delaying it, and no local policy arbitrates one throat.
 
 What this establishes is narrow: on a corridor with two switchable pairs of tracks, a warm-started PPO learns to take the commit crossover when the track ahead is blocked, and never takes one when the track is clear. Necessity is what the audit proves (0 turns in 202 open-track visits); sufficiency is only approximate, since 81 of 101 blocked visits turned and (5,59) turned on 20 of 40. It does not show that per-agent RL arbitrates a junction, and three limits bound the evidence: one training seed per arm, held-out seeds that vary blockage placement only, and a sign test on the per-seed deltas with no confidence interval. Three extensions follow: the same 30-seed paired run for A2C and DQN, a global view for the junction (a graph or attention observation, or imitation of the route follower), and a comparison against the stronger scripted distance-map baseline. A deployed version would also have to make the decision observable: a signaller needs to know which crossover the policy intends to use before it uses it.
+
+```{=openxml}
+<w:p><w:r><w:br w:type="page"/></w:r></w:p>
+```
+
+# 5. References
+
+Gorrey, M., Segaert, A., Ganko, J., & Kaine, E. (2025, May 21). ‘Delay all non-essential travel’: Commuters warned to expect more train chaos. The Sydney Morning Herald. https://www.smh.com.au/national/nsw/major-disruptions-expected-as-power-failure-halts-trains-20250520-p5m0t1.html
+
+Li, B., Guo, T., Li, R., Wang, Y., Ou, Y., & Chen, F. (2021). Delay propagation in large railway networks with data-driven Bayesian modeling. Transportation Research Record, 2675(11), 472-485.
+
+Mohanty, S., Nygren, E., Laurent, F., Schneider, M., Scheller, C., Bhattacharya, N., Watson, J., Egli, A., Eichenberger, C., & Baumberger, C. (2020). Flatland-rl: Multi-agent reinforcement learning on trains. arXiv preprint arXiv:2012.05893.
+
+Roberts, M. ( 2024, June 17). Signal repairs cause train disruption in Sydney during Monday morning commute ABC News. https://www.abc.net.au/news/2024-06-17/nsw-sydney-trains-harris-park-service-repair-delay-commute/103985636
+
+Šemrov, D., Marsetič, R., Žura, M., Todorovski, L., & Srdic, A. (2016). Reinforcement learning approach for train rescheduling on a single-track railway. Transportation Research Part B: Methodological, 86, 250-267.
+
+Sutton, R. S., & Barto, A. G. (2018). Reinforcement Learning, second edition: An Introduction. MIT Press. https://books.google.com.au/books?id=uWV0DwAAQBAJ
+
+Sydney Trains. (2025). Sydney Trains Annual Report https://www.transport.nsw.gov.au/system/files/media/documents/2025/sydney-trains-annual-report-2024%E2%80%9325-volume-1.pdf
+
+Zhu, Y., & Goverde, R. M. (2019). Railway timetable rescheduling with flexible stopping and flexible short-turning during disruptions. Transportation Research Part B: Methodological, 123, 149-181.
+
+```{=openxml}
+<w:p><w:r><w:br w:type="page"/></w:r></w:p>
+```
+
+# Appendices
+
+## A. Individual Contribution
+
+Each group member should write half-page (max) about his or her contribution in the project development activities.
+
+## B. Individual Contribution Split
+
+All the team members have discussed and agreed on the above individual contribution to the project.
+
+| Team Member Name | Percentage |
+|:--|--:|
+| Daniel James Martirosov | 33.33% |
+| Ziheng Deng | 33.33% |
+| Laurean Lim | 33.33% |
+
+Daniel James Martirosov : ____________________
+
+Ziheng Deng : ____________________
+
+Laurean Lim : ____________________
