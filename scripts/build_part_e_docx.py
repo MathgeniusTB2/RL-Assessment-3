@@ -62,7 +62,7 @@ def heading(doc: Document, text: str, level: int) -> None:
 
 def para(doc: Document, text: str, size: float = 12) -> None:
     p = doc.add_paragraph()
-    p.paragraph_format.space_after = Pt(6)
+    p.paragraph_format.space_after = Pt(4)
     for chunk, bold, italic in md_blocks.inline(text):
         run = p.add_run(chunk)
         run.bold = bold or None
