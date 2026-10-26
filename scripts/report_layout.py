@@ -1,8 +1,8 @@
-"""Layout helpers for the Part E docx builder.
+"""Layout helpers for the Part E docx renderer.
 
-`build_part_e_report.py` writes the .docx version of the Part E report (for Google
-Docs); `build_part_e_tex.py` writes the LaTeX version. The paragraph, table, figure
-and caption styling shared by the docx output lives here.
+`build_part_e_docx.py` renders `report/part-e.md` with these helpers: the page
+footer and the font pinning that keeps the unit template's Times New Roman in
+place when LibreOffice resolves the styles.
 """
 from __future__ import annotations
 

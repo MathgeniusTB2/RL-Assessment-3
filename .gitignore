@@ -71,14 +71,5 @@ attic/
 .vscode/
 .idea/
 
-# LaTeX build products (the .tex and .bib are tracked)
-report/*.aux
-report/*.bbl
-report/*.bcf
-report/*.blg
-report/*.fdb_latexmk
-report/*.fls
-report/*.log
-report/*.out
-report/*.run.xml
-report/*.toc
+# report build caches
+report/.toc-pages.json
