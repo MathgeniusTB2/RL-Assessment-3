@@ -62,7 +62,7 @@ Flatland is a multi-agent railway simulation environment designed to investigate
 
 For this project, two railway scenarios were developed to represent selected sections of Sydney's metropolitan railway network: the Central–Strathfield corridor (Scenario 1) and the Granville–Harris Park corridor (Scenario 2). Each scenario incorporates railway track layouts and timetable information to model train routes and movements within the simulation environment. Both normal operating conditions and delayed scenarios are considered to investigate how different scheduling approaches respond to disruptions. Figures 1 and 2 illustrate the simulated railway environments used in the project.
 
-![Figure 1: The corridor level used in this report - 87 x 8 with four through tracks; the inset shows columns 1 to 26 at native scale](../results/report_figures/fig_corridor_map.png){width=85%}
+![Figure 1: The compact corridor level used in this report - 87 x 8 with four through tracks and 52 movements. Ticks mark the seven commit crossovers, labelled with their column, where a train can change track](../results/report_figures/fig_s1_level.png){width=100%}
 
 ![Figure 2: Flatland implementation of the Granville-Harris Park corridor (Scenario 2).](template_figures/map_2.png){width=95%}
 
