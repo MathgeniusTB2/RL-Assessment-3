@@ -24,10 +24,7 @@ OUT = REPO / "results" / "report_figures" / "fig_s1_level.png"
 WIDTH = 3600
 SCENARIO = "network-simple-compact"
 
-STATIONS = {1: "Strathfield", 14: "Burwood", 40: "Redfern", 84: "Central"}
-ROWS = {2: "row 2  up suburban", 3: "row 3  down suburban",
-        4: "row 4  up local", 5: "row 5  down local"}
-ROW_COLOUR = {2: (31, 56, 100), 3: (120, 60, 30), 4: (31, 56, 100), 5: (120, 60, 30)}
+SCENARIO = "network-simple-compact"
 
 
 def main() -> int:
@@ -35,56 +32,33 @@ def main() -> int:
     env = nb["make_env"](scenario=SCENARIO, condition="normal", seed=3000)
     env.reset(random_seed=3000)
 
-    height = max(120, int(WIDTH * env.height / max(env.width, 1)))
-    renderer = RenderTool(env, gl="PILSVG", screen_width=WIDTH, screen_height=height)
+    width = 3600
+    height = max(120, int(width * env.height / max(env.width, 1)))
+    renderer = RenderTool(env, gl="PILSVG", screen_width=width, screen_height=height)
     frame = renderer.render_env(show=False, show_agents=False,
-                               show_observations=False, return_image=True)
-    base = Image.fromarray(frame).convert("RGB")
-    # the renderer picks its own cell size; derive the geometry from what it drew
-    cell = base.width / env.width
-    row_h = base.height / env.height
+                                show_observations=False, return_image=True)
+    plate = Image.fromarray(frame).convert("RGB")
 
-    top = 16
-    bottom = 60
-    left = int(base.width * 0.085)
-    right = 30
-    canvas = Image.new("RGB", (base.width + left + right, base.height + top + bottom), "white")
-    canvas.paste(base, (left, top))
-    draw = ImageDraw.Draw(canvas)
-
-    def font(size: int):
-        try:
-            return ImageFont.truetype("DejaVuSans.ttf", size)
-        except Exception:  # pragma: no cover - font always present on the box
-            return ImageFont.load_default()
-
-    # size the annotation to the frame the renderer actually produced, so the
-    # labels stay legible when the plate is placed at page width
-    # the renderer rasterises the level at ~27 px per cell, so the annotation is
-    # sized against that frame rather than the cell count
-    f_station = font(max(40, int(base.width * 0.019)))
-    f_row = font(max(34, int(base.width * 0.016)))
-    f_tick = font(max(34, int(base.width * 0.016)))
-    f_note = font(max(26, int(base.width * 0.011)))
-
-    # track rows: label at the left edge, on the row's own centre line
-    for row, label in ROWS.items():
-        y = top + int((row + 0.5) * row_h)
-        draw.text((left - 16, y), label, fill=ROW_COLOUR[row], font=f_row, anchor="rm")
-        draw.line((left - 10, y, left - 2, y), fill=ROW_COLOUR[row], width=3)
-
-    # commit crossovers: a tick under the map at the cell's column and row
-    for row, col in sorted(regimes.COMMIT_CELLS):
-        x = left + int((col + 0.5) * cell)
-        y0 = top + base.height
-        draw.line((x, y0 + 6, x, y0 + 34), fill=ROW_COLOUR[row], width=5)
-
-
+    # the level itself and nothing else: crop the renderer's blank margin
+    bg = Image.new("RGB", plate.size, (255, 255, 255))
+    box = Image.eval  # keep ruff quiet about the unused name
+    bbox = _content_bbox(plate)
+    if bbox:
+        plate = plate.crop(bbox)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(OUT)
-    print("wrote", OUT, canvas.size)
+    plate.save(OUT)
+    print("wrote", OUT, plate.size)
     return 0
+
+
+def _content_bbox(img: Image.Image):
+    """Bounding box of everything that is not the white page margin."""
+    from PIL import ImageChops
+
+    grey = img.convert("L")
+    diff = ImageChops.difference(grey, Image.new("L", grey.size, 255))
+    return diff.getbbox()
 
 
 if __name__ == "__main__":
