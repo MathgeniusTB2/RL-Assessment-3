@@ -150,6 +150,8 @@ def figure(doc: Document, block: md_blocks.Block) -> None:
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_before = Pt(6)
     p.paragraph_format.space_after = Pt(2)
+    # keep the picture on the same page as its caption
+    p.paragraph_format.keep_with_next = True
     p.add_run().add_picture(str(path), width=Cm(TEXT_WIDTH_CM * block.width))
 
 

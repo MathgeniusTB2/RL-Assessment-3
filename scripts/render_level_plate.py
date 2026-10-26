@@ -44,8 +44,8 @@ def main() -> int:
     cell = base.width / env.width
     row_h = base.height / env.height
 
-    top = 78
-    bottom = 150
+    top = 16
+    bottom = 60
     left = int(base.width * 0.085)
     right = 30
     canvas = Image.new("RGB", (base.width + left + right, base.height + top + bottom), "white")
@@ -67,12 +67,6 @@ def main() -> int:
     f_tick = font(max(34, int(base.width * 0.016)))
     f_note = font(max(26, int(base.width * 0.011)))
 
-    # stations: name above the rails, tick down to the top rail row
-    for col, name in STATIONS.items():
-        x = left + int((col + 0.5) * cell)
-        draw.text((x, top - 34), name, fill=(20, 20, 60), font=f_station, anchor="mm")
-        draw.line((x, top - 14, x, top + 2), fill=(20, 20, 60), width=3)
-
     # track rows: label at the left edge, on the row's own centre line
     for row, label in ROWS.items():
         y = top + int((row + 0.5) * row_h)
@@ -83,12 +77,9 @@ def main() -> int:
     for row, col in sorted(regimes.COMMIT_CELLS):
         x = left + int((col + 0.5) * cell)
         y0 = top + base.height
-        draw.line((x, y0 + 4, x, y0 + 26), fill=ROW_COLOUR[row], width=5)
-        draw.text((x, y0 + 32), f"{col}", fill=ROW_COLOUR[row], font=f_tick, anchor="mt")
+        draw.line((x, y0 + 6, x, y0 + 34), fill=ROW_COLOUR[row], width=5)
 
-    draw.text((left, top + base.height + 88),
-              "ticks mark the seven commit crossovers (column below each tick)",
-              fill=(70, 70, 70), font=f_note)
+
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(OUT)
