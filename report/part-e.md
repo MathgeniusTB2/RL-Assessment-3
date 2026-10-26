@@ -62,7 +62,7 @@ Flatland is a multi-agent railway simulation environment designed to investigate
 
 For this project, two railway scenarios were developed to represent selected sections of Sydney's metropolitan railway network: the Central–Strathfield corridor (Scenario 1) and the Granville–Harris Park corridor (Scenario 2). Each scenario incorporates railway track layouts and timetable information to model train routes and movements within the simulation environment. Both normal operating conditions and delayed scenarios are considered to investigate how different scheduling approaches respond to disruptions. Figures 1 and 2 illustrate the simulated railway environments used in the project.
 
-![Figure 1: Flatland implementation of the Central-Strathfield corridor (Scenario 1)](template_figures/map_1.png){width=95%}
+![Figure 1: The corridor level used in this report - 87 x 8 with four through tracks; the inset shows columns 1 to 26 at native scale](../results/report_figures/fig_corridor_map.png){width=85%}
 
 ![Figure 2: Flatland implementation of the Granville-Harris Park corridor (Scenario 2).](template_figures/map_2.png){width=95%}
 
@@ -74,9 +74,9 @@ For this project, two railway scenarios were developed to represent selected sec
 
 ## 2.1 Flow Diagram and Workflow
 
-The workflow runs in seven stages, each with a defined input and output (Figure 3). The dashed arrow is deliberate: every change to the observation, reward or disruption regime was re-validated by re-running the same paired evaluation, so this report only contains numbers produced by the final configuration, with the two labelled junction rows of Table 5 as the one disclosed exception.
+The workflow runs in seven stages, each with a defined input and output (Figure 3). The dashed arrow is deliberate: every change to the observation, reward or disruption regime was re-validated by re-running the same paired evaluation, so this report only contains numbers produced by the final configuration, with the three labelled junction rows of Table 5 as the one disclosed exception.
 
-![Figure 3: End-to-end workflow. Each stage consumes the artefact produced by the previous one; the dashed arrow marks the design loop that re-ran the evaluation after every change.](../results/report_figures/fig_workflow.png){width=95%}
+![Figure 3: End-to-end workflow. Each stage consumes the artefact produced by the previous one; the dashed arrow marks the design loop that re-ran the evaluation after every change.](../results/report_figures/fig_workflow.png){width=90%}
 
 - Service extraction: the GTFS feed (about 1.4 GB) is filtered to one Thursday peak, with link traversal times derived from the shapes.
 - Scenario construction: two Flatland levels and two timetables, the corridor (87 x 8, 52 movements) and the junction (20 x 20, 126 movements).
@@ -92,17 +92,17 @@ One shared multi-layer perceptron controls every train: 1032 inputs, two hidden 
 
 The reward is the assessment metric paid densely as a potential, r(t) = R(t) - R(t-1), where R(t) is what the metric would charge if the episode ended at t. The sum telescopes to the metric exactly, verified per agent and per term to machine precision, and training divides the potential by a constant 100 so the value targets stay O(1). All reported arms also use two shaping bonuses on top of the potential: +50 for every train that arrives and -1 for every step a train is stuck, at the same 1/100 scale, which is disclosed here because the reported arm is not the bare-metric arm.
 
-From a random initialisation none of the three algorithms finds the crossing, so the reported corridor arm is PPO fine-tuned from a behaviour-cloned detour baseline (imitation then RL), with the critic warmed up first. The two independent algorithms are the control: they share the observation, reward and regime but not the warm start. The notebook is the assembly point and imports the shared modules from scripts/ instead of duplicating them, so the notebook, the trainers and the evaluator cannot drift apart.
+From a random initialisation neither control algorithm finds the crossing in its rendered episode, so the reported corridor arm is PPO fine-tuned from a behaviour-cloned detour baseline (imitation then RL), with the critic warmed up first. The two independent algorithms are the control: they share the observation, reward and regime but not the warm start. The notebook is the assembly point and imports the shared modules from scripts/ instead of duplicating them, so the notebook, the trainers and the evaluator cannot drift apart.
 
 ## 2.3 GUI/Environment Design
 
-Flatland's own renderer is the interface, which the brief permits in place of a separate GUI: it shows the rail grid with its switches and crossovers, one coloured marker per train, and a red X on every cell that may not be entered - an exogenous blockage on the corridor, a train standing in malfunction on the junction. Using the simulator's renderer means every episode figure comes from the same process the agent is trained in, produced headlessly with the PIL backend. Figures 1 and 2 are the two levels; Figures 4 and 5 show the same levels under their disruption regimes.
+Flatland's own renderer is the interface, which the brief permits in place of a separate GUI: it shows the rail grid with its switches and crossovers, one coloured marker per train, and a red X on every cell that may not be entered - an exogenous blockage on the corridor, a train standing in malfunction on the junction. Using the simulator's renderer keeps every episode figure inside the same simulator the agents are trained in - drawn through make_env, while training and evaluation use make_parallel_env, which adds the dwell wrapper - and produced headlessly with the PIL backend, so the panel scores are indicative rather than the reported numbers. Figures 1 and 2 are the two levels; Figures 4 and 5 show the same levels under their disruption regimes.
 
-![Figure 4: The corridor under the block regime, four arms on the same episode (seed 3001; step 232 for forward-only, PPO and A2C, step 300 for DQN). The red X is a cell whose rail transitions were removed. Forward-only, A2C and DQN leave a queue behind the upper X; PPO's track ahead of it is clear because it changed at the previous crossover.](../results/report_figures/fig_corridor_arms.png){width=100%}
+![Figure 4: The corridor under the block regime, four arms on the same episode (seed 3001; step 232 for forward-only, PPO and A2C, step 300 for DQN). The red X is a cell whose rail transitions were removed. Forward-only, A2C and DQN leave a queue behind the upper X; PPO's track ahead of it is clear because it changed at the previous crossover.](../results/report_figures/fig_corridor_arms.png){width=95%}
 
-![Figure 5: The junction at step 156 under the train-borne regime. Left: the scripted route follower, with the held train marked. Right: the selected PPO checkpoint, which dispatches into the throat and jams.](../results/report_figures/fig_junction_pair.png){width=95%}
+![Figure 5: The junction at step 156 under the train-borne regime. Left: the scripted route follower, with the held train marked. Right: the selected PPO checkpoint, which dispatches into the throat and jams.](../results/report_figures/fig_junction_pair.png){width=85%}
 
-The disruption regime is the methodological core. A train-borne failure fires when a train reaches a cell, which makes the disruption a function of the policy's own trajectory: a policy that reroutes early can prevent the incident from firing at all. The corridor therefore uses an exogenous blockage: a cell's rail transitions are removed outright at a seed-drawn step and restored after 400 steps, so the failure exists whether or not a train goes near it. Two are drawn per episode, one per direction, from the cells just past each commit crossover; activation is deferred while a cell is occupied, and dropped if it stays occupied for 60 steps. Both arms are given the same cells at the same seed-drawn steps, so the pairing is by seed and blockage plan.
+The disruption regime is the methodological core. A train-borne failure fires when a train reaches a cell, which makes the disruption a function of the policy's own trajectory: a policy that reroutes early can prevent the incident from firing at all. The corridor therefore uses an exogenous blockage: a cell's rail transitions are removed outright at a seed-drawn step and restored after 400 steps, so the failure exists whether or not a train goes near it. Two are drawn per episode, one per direction, from the cells just past each commit crossover; activation is deferred while a cell is occupied and dropped after 60 steps. Both arms get the same cells at the same seed-drawn steps, so the pairing is by seed and plan.
 
 ```{=openxml}
 <w:p><w:r><w:br w:type="page"/></w:r></w:p>
@@ -128,7 +128,7 @@ Table 1 lists the settings. All arms act deterministically; the corridor arm is 
 
 :Table 1: Experimental settings. The maps share the observation, action space and evaluation protocol; they differ in disruption mechanism because only the corridor has a switchable pair of parallel tracks.
 
-The regime and the policy are CPU-bound: Flatland steps the fleet in Python and the 1032-d tree observation is rebuilt for every agent at every step. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen four-episode evaluations (about 660 environment steps per second), and once startup is paid each evaluation interval costs about 148 s, so the evaluator rather than the optimiser sets the wall clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info recorded in the checkpoint); the notebook and figures also run on an aarch64 relay with the same pinned stack, where the sixteen tests pass. Every table below is regenerated from the CSVs in results/.
+The regime and the policy are CPU-bound: Flatland steps the fleet in Python and the 1032-d tree observation is rebuilt for every agent at every step. The shipped corridor run took 1,865 s for 1,224,704 timesteps including thirteen four-episode evaluations (about 660 environment steps per second), and once startup is paid each evaluation interval costs about 148 s, so the evaluator rather than the optimiser sets the wall clock. Training ran on an x86_64 workstation with an RTX 3080 (the system_info recorded inside runs/xb_b/best_model.zip); the notebook and the figures also run on an aarch64 relay with the same pinned stack, and the sixteen tests pass (results/test_run.txt). Every table below is regenerated from the CSVs in results/.
 
 ## 3.2 Pre-Processing
 
@@ -151,7 +151,7 @@ The corridor result is the headline. PPO improves the score from -0.0662 to -0.0
 
 :Table 2: Corridor, 30 paired held-out seeds under the block regime. Only PPO has the full paired test; Table 3 reports what the other two algorithms did in training.
 
-![Figure 6: The 30 per-seed differences behind Table 2. All 30 are positive, with a mean of +0.0657 and a median of +0.0648](../results/report_figures/fig_delta.png){width=70%}
+![Figure 6: The 30 per-seed differences behind Table 2. All 30 are positive, with a mean of +0.0657 and a median of +0.0648](../results/report_figures/fig_delta.png){width=62%}
 
 The two independent algorithms are the control for the claim that learning the crossing is not automatic; Figure 7 traces all three arms over the training budget.
 
@@ -163,7 +163,7 @@ The two independent algorithms are the control for the claim that learning the c
 
 :Table 3: Corridor training outcome per arm. Score and completion are the selection-seed numbers, not the 30-seed paired numbers in Table 2; the behaviour column is a reading of the Figure 4 panels, which are rendered with make_env rather than the evaluator.
 
-![Figure 7: The three corridor arms during training, from the internal evaluation used for checkpoint selection. PPO starts from the behaviour-cloned checkpoint and stays near zero until it drifts at the end of the budget; A2C and DQN fall into the parking basin. The dashed line is the forward-only 30-seed mean.](../results/report_figures/fig_curve.png){width=90%}
+![Figure 7: The three corridor arms during training, from the internal evaluation used for checkpoint selection. PPO starts from the behaviour-cloned checkpoint and stays near zero until it drifts at the end of the budget; A2C and DQN fall into the parking basin. The dashed line is the forward-only 30-seed mean.](../results/report_figures/fig_curve.png){width=85%}
 
 A score gain alone does not prove the policy changes track for the right reason, since a policy that crossed at every crossover would also gain on this map. The audit counts the decisions themselves: for every agent-step standing on a commit crossover it records whether a blocked cell lay ahead on that train's own row within 60 cells, and whether the agent chose a lateral action. The per-crossover table is shipped as results/crossing_audit_block.csv.
 
@@ -180,9 +180,9 @@ A score gain alone does not prove the policy changes track for the right reason,
 
 :Table 4: Per-crossover decision audit over seeds 3000 and 3001. Blocked means an impassable cell ahead on the train's own row within 60 cells. (5,59) is the only crossover with blocked visits that did not always turn (20 of 40); the CSV records counts rather than per-visit causes, so none is claimed.
 
-![Figure 8: Turn rate on the visits where the track ahead was blocked.](../results/report_figures/fig_audit.png){width=75%}
+![Figure 8: Turn rate on the visits where the track ahead was blocked.](../results/report_figures/fig_audit.png){width=70%}
 
-Of 101 agent-steps standing on a crossover with a blocked cell ahead, 81 produced a turn; of 202 with a clear track, 0 did. The audit records one decision per visit to a commit cell, so 81 turns over two seeds is about 40 diverts per episode. The rate is not uniform - four crossovers turn on every blocked visit and (5,59) on 20 of 40 - so the behaviour is state-dependent, not a blanket lane swap, and the A2C and DQN panels of Figure 4 show what the blanket alternative looks like.
+Of 101 agent-steps standing on a crossover with a blocked cell ahead, 81 produced a turn; of 202 with a clear track, 0 did. The audit records one decision per visit to a commit cell, so 81 turns over two seeds is about 40 diverts per episode. The rate is not uniform - four crossovers turn on every blocked visit and (5,59) on 20 of 40 - so the behaviour is state-dependent, not a blanket lane swap, and the A2C and DQN panels of Figure 4 show what the two degenerate alternatives look like - never turning, and parking.
 
 Under the clean condition the same checkpoint is inert: on 3 seeds it scores 0.0000, exactly as the forward-only baseline does, and the decision audit records 546 visits to a commit crossover with a clear track and not one turn (results/clean_audit.csv). With the blockage suppressed but the Poisson malfunction layer left on, the arm is indistinguishable from the baseline: -0.0133 against -0.0165, a paired +0.0032 on 3 seeds, 3 of 3 but p = 0.25. The crossings in Table 4 therefore belong to the blockage, not to the policy's habit.
 
@@ -204,7 +204,7 @@ Parking scores better than attempting: every learned 30-seed arm scores about +0
 - Only PPO has the full 30-seed paired test on the corridor. A2C and DQN are reported from their selection seeds and the rendered episode; a paired run for them would strengthen the three-algorithm claim and is the obvious next experiment.
 - The corridor decision is local: one crossover per blocked stretch and a two-cell detour. The result is not evidence that per-agent RL can arbitrate a junction.
 - The disruption volume is a modelling choice, not data: 2 x 400 steps keeps completion at 1.000 while making every affected trip late.
-- From-scratch learning does not find the crossing, and the A2C and DQN arms demonstrate it independently. The corridor arm is imitation-then-RL, not pure exploration, and the warm start inherits the teacher's own score of -0.0005.
+- From-scratch learning does not find the crossing, and the A2C and DQN arms demonstrate it independently. The corridor arm is imitation-then-RL, not pure exploration: the warm-start checkpoint scores -0.0010 before fine-tuning, against the -0.0005 of the hand-written rule it was cloned from (runs/xb_b/eval.csv, results/all_arms.md).
 - The 30 held-out seeds vary the blockage placement only: fleet, timetable and deterministic actions are fixed, a single training seed per arm was run, and the mean delta has a sign test but no confidence interval.
 - The junction table mixes two observation versions; the 30-seed checkpoints predate the two feature additions and no longer load. They are reported as measured and labelled.
 - Evaluation is entirely simulated. The timetable and the track layout are real; there is no operational validation and no human factors layer.
