@@ -108,14 +108,18 @@ python scripts/build_part_e_md.py                       # regenerate the Markdow
 python scripts/build_part_e_docx.py                     # render .docx and .pdf
 ```
 
-`build_part_e_md.py` composes the Markdown from the CSVs in `results/` (through
-`scripts/report_data.py`), so every number in the prose and the five tables traces to a
-shipped file; section 1 and its two level figures are lifted from
-`templates/part-e-template-2.docx`. After that, **`report/part-e.md` is the file to edit**
-and `build_part_e_docx.py` is the only step that produces Word: it parses the Markdown
-(`scripts/md_blocks.py`) and renders it with the template's styles — Times New Roman
-12 pt body, 24/18 pt bold headings, 2.54 cm margins — adding the static contents page
-and the page-number footer.
+`report/part-e.md` **is** the report: edit it directly. `scripts/build_part_e_docx.py` is
+the only step that produces Word — it parses the Markdown (`scripts/md_blocks.py`) and
+renders it with the template's styles (Times New Roman 12 pt body, 24/18 pt bold headings,
+2.54 cm margins), adding the static contents page and the page-number footer.
+`scripts/check_report_numbers.py` recomputes every figure from `results/` (through
+`scripts/report_data.py`) and fails if one no longer appears in the Markdown, so the
+hand-edited text cannot drift from the evidence:
+
+```bash
+python scripts/check_report_numbers.py   # numbers still match results/
+python scripts/build_part_e_docx.py      # render .docx and .pdf
+```
 
 `report/RailTech-A3-PartE-Report.docx` is the submission, `report/RailTech-A3-PartE-Report.pdf`
 the same document rendered for reading. The two figures on page 4 come from the template
